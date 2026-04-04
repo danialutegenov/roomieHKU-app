@@ -1,0 +1,15 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RoomieHKU Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'core/css/styles.css' %}" />
+  </head>
+  <body class="bg-slate-100 text-slate-900">
+    {% block content %}{% endblock %}
+    <script src="{% static 'core/js/main.js' %}"></script>
+  </body>
+</html>

@@ -19,7 +19,7 @@ The project prioritizes speed, clarity, and team familiarity. Since the team alr
 - **Frontend approach:** Django templates with HTML, CSS, and JavaScript
 - **Styling approach:** Tailwind CSS
 - **Authentication:** Django built-in authentication and session management
-- **Admin tooling:** Django admin
+- **Admin tooling:** custom admin dashboard UI plus Django admin
 - **Runtime context:** local development and local demonstration
 
 ## Architecture Overview
@@ -31,6 +31,7 @@ RoomieHKU will use a monolithic web application structure.
 - Django ORM is used to read from and write to the database
 - Django models and migrations define and evolve the schema
 - HTML pages are rendered on the server and returned to the browser
+- two frontend surfaces are served by the same backend: student app UI and admin dashboard UI
 - JavaScript is used only where needed
 
 ## Frontend and Backend Communication
@@ -115,41 +116,73 @@ Authentication will use Django’s built-in user and session system.
 
 The frontend will be built with Django templates rather than a separate JavaScript application.
 
-The UI will use Tailwind CSS for styling, with small amounts of JavaScript added where extra interactivity is needed.
+The UI will use Tailwind CSS for styling (loaded via CDN for this course-project MVP), with small amounts of JavaScript added where extra interactivity is needed.
+
+The project will maintain two frontend surfaces:
+
+- **Student app frontend:** user-facing flows for listings, search, saved items, and comments
+- **Admin dashboard frontend:** internal moderation and platform oversight UI (staff-only access)
 
 ## Suggested Project Structure
 
-Example direction:
+Current scaffold direction:
 
 ```text
 roomiehku/
+  .env.example
   manage.py
+  requirements.txt
   roomiehku/
+    __init__.py
+    asgi.py
     settings.py
     urls.py
-  app/
-    models.py
-    views.py
+    wsgi.py
+  core/
+    __init__.py
+    admin.py
+    apps.py
     forms.py
-    urls.py
+    models.py
     migrations/
+      __init__.py
     templates/
+      core/
+        app/
+          base.html
+          home.html
+        dashboard/
+          base.html
+          home.html
     static/
+      core/
+        app/
+        css/
+        dashboard/
+        js/
+        images/
+    tests.py
+    urls.py
+    views.py
+  media/
+    listing_images/
   docs/
 ```
 
 - `manage.py`: runs Django commands
-- `roomiehku/`: project-level config
+- `roomiehku/`: project-level Django config
 - `settings.py`: app and database settings
-- `urls.py`: main route entry
-- `app/`: main application logic
+- `urls.py`: main route entry and app route includes
+- `core/`: main application logic
 - `models.py`: database models
 - `views.py`: request handling
 - `forms.py`: form validation and input handling
-- `app/urls.py`: app-specific routes
+- `core/urls.py`: app-specific routes
 - `migrations/`: database schema changes
-- `templates/`: HTML pages
-- `static/`: CSS, JS, images
+- `templates/core/app/`: student app templates
+- `templates/core/dashboard/`: admin dashboard templates
+- `static/core/`: namespaced CSS, JS, images
+- `media/listing_images/`: uploaded listing files
 - `docs/`: project documentation
 
 For the current project scope, the team will keep the system in one Django app to reduce setup overhead and move faster.
@@ -169,6 +202,7 @@ For the current project scope, the team will keep the system in one Django app t
 - a separate public API is not required for the first version
 - partial asynchronous page updates are not required for the first version
 - the project will stay in one Django app for simplicity
+- both frontend surfaces will be served from the same Django project
 - the team values fast delivery and maintainability over architectural novelty
 
 ## Open Decisions

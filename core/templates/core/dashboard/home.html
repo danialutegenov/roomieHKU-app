@@ -1,0 +1,23 @@
+{% extends 'core/dashboard/base.html' %}
+
+{% block content %}
+<main class="mx-auto max-w-4xl px-6 py-12">
+  <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+  <p class="mt-2 text-slate-600">Internal frontend for moderation and platform oversight.</p>
+
+  <section class="mt-8 grid gap-4 md:grid-cols-3">
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm text-slate-500">Pending listings</p>
+      <p class="mt-2 text-2xl font-semibold">--</p>
+    </article>
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm text-slate-500">Reported comments</p>
+      <p class="mt-2 text-2xl font-semibold">--</p>
+    </article>
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm text-slate-500">Active users</p>
+      <p class="mt-2 text-2xl font-semibold">--</p>
+    </article>
+  </section>
+</main>
+{% endblock %}

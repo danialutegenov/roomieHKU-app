@@ -1,0 +1,21 @@
+:root {
+  --bg: #f8fafc;
+  --fg: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.container {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
