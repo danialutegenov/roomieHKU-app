@@ -1,0 +1,5 @@
+{
+  "name": "Remix: RoomieHKU",
+  "description": "The fronted part of the app, which include login, home and registration page, also admin part and a bit user part.",
+  "requestFramePermissions": []
+}
