@@ -66,6 +66,7 @@ class Post(models.Model):
 
     # Core Feature: Timestamp
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']  # Default sorting: newest first
