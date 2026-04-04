@@ -42,6 +42,7 @@ erDiagram
         text lifestyle_notes "For roommate matching"
         int likes_count "Denormalized for popularity sorting"
         datetime created_at "Timestamp"
+        datetime updated_at
     }
 
     COMMENT {
