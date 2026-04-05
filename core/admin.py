@@ -1,8 +1,17 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from .models import User, Post, Comment, Like, SavedListing
 
-admin.site.register(User)
+class CustomUserAdmin(UserAdmin):
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': ('bio', 'phone_number', 'profile_photo')}),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {'fields': ('bio', 'phone_number', 'profile_photo')}),
+    )
+
+admin.site.register(User, UserAdmin)
 admin.site.register(Post)
 admin.site.register(Comment)
 admin.site.register(Like)
