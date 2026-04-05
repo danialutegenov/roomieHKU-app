@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator
 
 
 class User(AbstractUser):
@@ -49,8 +50,13 @@ class Post(models.Model):
 
     # RoomieHKU Business Logic
     listing_type = models.CharField(max_length=20, choices=LISTING_TYPE_CHOICES)
-    location = models.CharField(max_length=100, help_text="e.g., Kennedy Town")
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Rent or Budget")
+    location = models.CharField(max_length=100, db_index=True, help_text="e.g., Kennedy Town")
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Rent or Budget"
+    )
 
     # Availability & Compatibility
     move_in_date = models.DateField(null=True, blank=True)
@@ -70,6 +76,16 @@ class Post(models.Model):
 
     class Meta:
         ordering = ['-created_at']  # Default sorting: newest first
+        indexes = [
+            models.Index(fields=['listing_type']),
+            models.Index(fields=['created_at']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(price__gte=0),
+                name='post_price_gte_0'
+            ),
+        ]
 
     def __str__(self):
         return f"{self.listing_type}: {self.title}"
@@ -100,7 +116,9 @@ class Like(models.Model):
 
     class Meta:
         # Prevents a single user from liking the same post multiple times
-        unique_together = ('user', 'post')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='unique_like_user_post'),
+        ]
 
 
 class SavedListing(models.Model):
@@ -114,4 +132,6 @@ class SavedListing(models.Model):
 
     class Meta:
         # Prevents duplicate saves
-        unique_together = ('user', 'post')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='unique_savedlisting_user_post'),
+        ]

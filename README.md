@@ -43,5 +43,4 @@ Then log in via `/admin/` and revisit `/dashboard/`.
 ## Notes
 
 - Tailwind is loaded via CDN in templates (no Node/Tailwind build step needed).
-- Default local DB is SQLite (`db.sqlite3`).
-- PostgreSQL settings are available via environment variables in `.env.example`.
+- Database is SQLite (`db.sqlite3`) for local development/demo.

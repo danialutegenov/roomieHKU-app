@@ -49,25 +49,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "roomiehku.wsgi.application"
 ASGI_APPLICATION = "roomiehku.asgi.application"
 
-# Default to SQLite for quick local setup; switch to PostgreSQL via env vars.
-if os.getenv("DB_ENGINE", "sqlite") == "postgres":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME", "roomiehku"),
-            "USER": os.getenv("DB_USER", "postgres"),
-            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
-            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-        }
+# SQLite-only setup for class project simplicity.
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Hong_Kong"

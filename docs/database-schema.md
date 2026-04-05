@@ -1,7 +1,7 @@
 # RoomieHKU Database Schema Documentation
 
 ## 1. Overview
-The RoomieHKU database is designed to provide a structured and efficient platform for HKU students to find housing and roommates. Built with **Django ORM** and backed by **PostgreSQL**, the schema emphasizes relational integrity, social engagement (likes/comments), and high-performance listing discovery.
+The RoomieHKU database is designed to provide a structured and efficient platform for HKU students to find housing and roommates. Built with **Django ORM** and backed by **SQLite**, the schema emphasizes relational integrity, social engagement (likes/comments), and high-performance listing discovery.
 
 ---
 
@@ -90,9 +90,9 @@ erDiagram
 ### C. Social & Interaction Models
 *   **Comment**: Linked to both `Post` and `User` with `CASCADE` deletion to maintain database cleanliness.
 *   **Like**: Maps the many-to-many relationship between users and posts they enjoy.
-    *   *Constraint*: `unique_together = ('user', 'post')` prevents duplicate likes from the same user.
+    *   *Constraint*: `UniqueConstraint(fields=['user', 'post'])` prevents duplicate likes from the same user.
 *   **SavedListing**: Allows users to bookmark listings for future reference.
-    *   *Constraint*: `unique_together = ('user', 'post')` prevents duplicate saves for the same post.
+    *   *Constraint*: `UniqueConstraint(fields=['user', 'post'])` prevents duplicate saves for the same post.
 
 ---
 
