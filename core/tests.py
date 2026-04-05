@@ -49,3 +49,14 @@ class CoreModelTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             invalid_post.full_clean()
+
+    def test_likes_count_syncs_on_like_create_and_delete(self):
+        self.assertEqual(self.post.likes_count, 0)
+
+        like = Like.objects.create(user=self.other_user, post=self.post)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.likes_count, 1)
+
+        like.delete()
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.likes_count, 0)
