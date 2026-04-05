@@ -11,7 +11,7 @@ class CustomUserAdmin(UserAdmin):
         (None, {'fields': ('bio', 'phone_number', 'profile_photo')}),
     )
 
-admin.site.register(User, UserAdmin)
+admin.site.register(User, CustomUserAdmin)
 admin.site.register(Post)
 admin.site.register(Comment)
 admin.site.register(Like)
