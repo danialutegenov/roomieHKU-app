@@ -12,7 +12,7 @@ class User(AbstractUser):
     phone_number = models.CharField(
         max_length=20,
         blank=True,
-        null=True,
+        default="",
         help_text="Contact number for interested parties"
     )
 
