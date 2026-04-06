@@ -1,0 +1,471 @@
+2. Main pages the frontend needs to build
+A. Home / Listings Feed Page
+Purpose
+This is the main page where users browse all housing and roommate listings.
+Who can access
+	•	Guest
+	•	Regular user
+	•	Admin
+What should be displayed
+Each listing card should show:
+	•	title
+	•	listing type (apartment, room, dorm, roommate request)
+	•	location
+	•	rent
+	•	timestamp
+	•	short description preview
+	•	image if available
+	•	save count
+	•	listing owner username
+Functions to integrate
+	•	fetch all visible listings
+	•	search by keyword
+	•	filter by:
+	•	location
+	•	listing type
+	•	rent range
+	•	sort by:
+	•	newest
+	•	lowest rent
+	•	highest rent
+	•	most saved
+Buttons/actions
+For guest:
+	•	View details
+	•	Login
+	•	Register
+For regular user:
+	•	View details
+	•	Save / Unsave listing
+	•	Go to Create Listing
+	•	Go to Profile
+For admin:
+	•	same as regular user
+	•	optional quick admin action badge or link
+Important UI behavior
+	•	if no listings match filters, show “No listings found”
+	•	if user is not logged in and presses Save, redirect to login or show message
+	•	filters should update displayed results clearly
+	•	listing cards should be clickable
+
+B. Listing Detail Page
+Purpose
+Show full information about one listing.
+Who can access
+	•	Guest
+	•	Regular user
+	•	Admin
+What should be displayed
+	•	full title
+	•	full description
+	•	image
+	•	rent
+	•	location
+	•	type
+	•	created date
+	•	owner username
+	•	save count
+	•	comments section
+Functions to integrate
+	•	fetch listing by ID
+	•	fetch comments for that listing
+	•	save / unsave listing
+	•	submit comment
+	•	delete own comment
+	•	admin delete comment
+	•	owner edit listing
+	•	owner delete listing
+Buttons/actions by user type
+Guest
+	•	View listing
+	•	View comments
+	•	Login to save/comment
+Regular user
+	•	Save / Unsave
+	•	Add comment
+	•	Delete own comment
+	•	Edit listing if owner
+	•	Delete listing if owner
+Admin
+	•	all regular actions if needed
+	•	Delete any comment
+	•	Hide listing
+	•	Delete listing
+Important UI behavior
+	•	comment form should only show for logged-in users
+	•	edit/delete buttons for listing should only show if:
+	•	current user owns listing, or
+	•	current user is admin
+	•	admin moderation buttons should never be visible to normal users
+
+C. Login Page
+Purpose
+Allow users to log into the platform.
+Who can access
+	•	Guest only
+What should be displayed
+	•	username/email field
+	•	password field
+	•	login button
+	•	link to register page
+Functions to integrate
+	•	submit login form
+	•	show login error if credentials are invalid
+	•	redirect after successful login
+Important UI behavior
+	•	show clear error messages
+	•	do not clear all fields unnecessarily on error
+	•	after login:
+	•	regular users go to feed page
+	•	admins may go to feed or admin dashboard
+
+D. Register Page
+Purpose
+Allow new users to create an account.
+Who can access
+	•	Guest only
+What should be displayed
+	•	username
+	•	email
+	•	password
+	•	confirm password
+	•	register button
+	•	link to login page
+Optional:
+	•	bio
+	•	profile picture URL
+Functions to integrate
+	•	submit registration form
+	•	validate fields
+	•	show backend errors such as:
+	•	username already exists
+	•	invalid email
+	•	weak password
+Important UI behavior
+	•	confirm password should match
+	•	required fields should be clearly marked
+	•	show success or redirect after registration
+
+E. Profile Page
+Purpose
+Show the logged-in user’s account information and activity.
+Who can access
+	•	Regular user
+	•	Admin
+What should be displayed
+	•	username
+	•	bio
+	•	profile picture
+	•	account status if relevant
+	•	tabs or sections for:
+	•	My Listings
+	•	Saved Listings
+Functions to integrate
+	•	fetch current user profile
+	•	fetch user’s own listings
+	•	fetch saved listings
+	•	update profile info
+Buttons/actions
+	•	Edit profile
+	•	View own listing details
+	•	Edit own listing
+	•	Delete own listing
+	•	Remove from saved listings
+Important UI behavior
+	•	saved listings should be clearly separate from created listings
+	•	empty states should exist:
+	•	“You have no listings yet”
+	•	“You have no saved listings yet”
+
+F. Edit Profile Page or Edit Profile Section
+Purpose
+Allow user to update profile details.
+Who can access
+	•	Logged-in users only
+What should be displayed
+	•	editable bio
+	•	editable profile picture URL
+	•	maybe editable email depending on backend design
+Functions to integrate
+	•	fetch current profile values
+	•	submit updated profile
+	•	display validation or success message
+Important UI behavior
+	•	pre-fill current profile data
+	•	show success feedback after saving
+
+G. Create Listing Page
+Purpose
+Allow logged-in users to post a new listing.
+Who can access
+	•	Regular user
+	•	Admin
+What should be displayed
+Form fields:
+	•	title
+	•	description
+	•	image URL
+	•	rent
+	•	location
+	•	listing type dropdown:
+	•	apartment
+	•	room
+	•	dorm
+	•	roommate request
+Functions to integrate
+	•	submit create listing form
+	•	validate required fields
+	•	redirect to created listing or feed page after success
+Important UI behavior
+	•	show required field errors
+	•	rent should only accept valid numeric values
+	•	dropdown should prevent invalid listing types
+
+H. Edit Listing Page
+Purpose
+Allow listing owners or admins to edit an existing listing.
+Who can access
+	•	Listing owner
+	•	Admin
+What should be displayed
+Same fields as create listing page, but pre-filled.
+Functions to integrate
+	•	fetch current listing data
+	•	submit updated listing
+	•	handle unauthorized access if user is not owner/admin
+Important UI behavior
+	•	prevent non-owners from seeing this page
+	•	show error or redirect if unauthorized
+
+I. Saved Listings Page
+Purpose
+Give users a clean page to view saved listings only.
+Who can access
+	•	Logged-in users only
+What should be displayed
+A list of saved listing cards similar to the feed page.
+Functions to integrate
+	•	fetch saved listings for current user
+	•	unsave listing
+	•	open listing detail page
+Buttons/actions
+	•	View details
+	•	Remove from saved
+Important UI behavior
+	•	if empty, show “No saved listings yet”
+
+3. Admin pages
+These pages are only for admin users.
+
+J. Admin Dashboard Page
+Purpose
+Give admins an overview of platform activity.
+Who can access
+	•	Admin only
+What should be displayed
+Summary cards or panels:
+	•	total users
+	•	total listings
+	•	total comments
+	•	most saved listings
+	•	most active users
+Functions to integrate
+	•	fetch analytics data
+	•	display counts and ranking lists
+Important UI behavior
+	•	only admins can see this page
+	•	if non-admin tries to access, redirect or show forbidden page
+
+K. Admin User Management Page
+Purpose
+Allow admins to manage user accounts.
+Who can access
+	•	Admin only
+What should be displayed
+A table/list of users with:
+	•	username
+	•	email
+	•	role
+	•	status
+	•	created date
+Functions to integrate
+	•	fetch all users
+	•	suspend user
+	•	reactivate user
+	•	maybe search/filter users
+Buttons/actions
+	•	Suspend
+	•	Reactivate
+	•	View user profile or user listings if supported
+Important UI behavior
+	•	buttons should change depending on current status
+	•	admin should not accidentally suspend themselves unless backend allows it
+
+L. Admin Listing Management Page
+Purpose
+Allow admins to moderate listings.
+Who can access
+	•	Admin only
+What should be displayed
+A table/list of listings with:
+	•	title
+	•	owner
+	•	type
+	•	location
+	•	rent
+	•	visibility status
+	•	created date
+Functions to integrate
+	•	fetch all listings
+	•	hide listing
+	•	unhide listing if supported
+	•	delete listing
+	•	view full listing
+Buttons/actions
+	•	Hide
+	•	Delete
+	•	View details
+Important UI behavior
+	•	hidden listings should be clearly labeled
+	•	destructive actions should ideally have confirmation
+
+M. Admin Comment Management Page (optional but useful)
+Purpose
+Allow admins to review and remove inappropriate comments.
+Who can access
+	•	Admin only
+What should be displayed
+	•	comment content
+	•	listing reference
+	•	author username
+	•	timestamp
+Functions to integrate
+	•	fetch comments
+	•	delete comment
+
+4. What the frontend must handle for different users
+Guest user
+Guest should be able to:
+	•	open home page
+	•	browse listings
+	•	search/filter/sort
+	•	open listing detail
+	•	view comments
+	•	go to login/register
+Guest should not be able to:
+	•	create listing
+	•	save listing
+	•	comment
+	•	access profile
+	•	access admin pages
+
+Regular user
+Regular user should be able to:
+	•	do everything guest can do
+	•	create listing
+	•	edit/delete own listing
+	•	save/unsave listing
+	•	comment on listings
+	•	delete own comments
+	•	view profile
+	•	view saved listings
+Regular user should not be able to:
+	•	suspend users
+	•	hide/delete other users’ listings unless backend allows
+	•	access admin dashboard
+
+Admin user
+Admin should be able to:
+	•	do normal browsing actions
+	•	access admin dashboard
+	•	view all users
+	•	suspend/reactivate users
+	•	hide/delete listings
+	•	delete comments
+	•	view analytics
+
+5. Frontend integrations they must not forget
+Authentication state
+Navbar/header should change depending on login state:
+Guest navbar
+	•	Home
+	•	Login
+	•	Register
+Logged-in user navbar
+	•	Home
+	•	Create Listing
+	•	Profile
+	•	Saved Listings
+	•	Logout
+Admin navbar
+	•	Home
+	•	Create Listing
+	•	Profile
+	•	Saved Listings
+	•	Admin Dashboard
+	•	Logout
+
+Error states
+For every page with forms or actions, show:
+	•	validation errors
+	•	server errors
+	•	permission errors
+	•	empty states
+Examples:
+	•	“Invalid username or password”
+	•	“Title is required”
+	•	“You are not allowed to edit this listing”
+	•	“No saved listings yet”
+
+Success states
+Show user feedback for actions like:
+	•	listing created successfully
+	•	profile updated
+	•	comment added
+	•	listing saved
+	•	listing removed from saved
+
+Confirmation states
+	•	deleting listing
+	•	deleting comment
+	•	suspending user
+	•	deleting user content in admin pages
+
+6. Recommended page priority for frontenders
+Priority 1
+	•	Login page
+	•	Register page
+	•	Home/Listings feed page
+	•	Listing detail page
+Priority 2
+	•	Create listing page
+	•	Profile page
+	•	Saved listings page
+Priority 3
+	•	Edit listing page
+	•	Edit profile page
+	•	Admin dashboard
+Priority 4
+	•	Admin user management
+	•	Admin listing management
+	•	Admin comment management
+
+7. Simple page checklist for the frontend team
+Public pages
+	•	Home / Listings Feed
+	•	Listing Detail
+	•	Login
+	•	Register
+Logged-in user pages
+	•	Profile
+	•	Create Listing
+	•	Edit Listing
+	•	Saved Listings
+	•	Edit Profile
+Admin pages
+	•	Admin Dashboard
+	•	Admin User Management
+	•	Admin Listing Management
+	•	Admin Comment Management
+
+

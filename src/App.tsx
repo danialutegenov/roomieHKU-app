@@ -11,6 +11,10 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminListingManagement from './pages/AdminListingManagement';
+import AdminCommentManagement from './pages/AdminCommentManagement';
+import Profile from './pages/Profile';
+import CreateListing from './pages/CreateListing';
+import ListingDetail from './pages/ListingDetail';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -60,17 +64,18 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             
             {/* Protected User Routes */}
-            <Route path="/create-listing" element={<PrivateRoute><div>Create Listing Page (Coming Soon)</div></PrivateRoute>} />
-            <Route path="/profile" element={<PrivateRoute><div>Profile Page (Coming Soon)</div></PrivateRoute>} />
-            <Route path="/saved-listings" element={<PrivateRoute><div>Saved Listings Page (Coming Soon)</div></PrivateRoute>} />
-            <Route path="/listing/:id" element={<div>Listing Detail Page (Coming Soon)</div>} />
+            <Route path="/create-listing" element={<PrivateRoute><CreateListing /></PrivateRoute>} />
+            <Route path="/edit-listing/:id" element={<PrivateRoute><CreateListing /></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="/saved-listings" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="/listing/:id" element={<ListingDetail />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUserManagement />} />
               <Route path="listings" element={<AdminListingManagement />} />
-              <Route path="comments" element={<div>Comment Management (Coming Soon)</div>} />
+              <Route path="comments" element={<AdminCommentManagement />} />
             </Route>
           </Route>
         </Routes>

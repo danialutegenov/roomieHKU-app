@@ -1,0 +1,345 @@
+RoomieHKU Technical Requirements
+1. Purpose
+This document defines the technical requirements for the RoomieHKU system so that frontend, backend, and database engineers can clearly understand the expected functionality, architecture direction, and implementation scope.
+
+2. System Summary
+RoomieHKU is a web application for HKU students to:
+	•	create housing listings
+	•	create roommate request listings
+	•	browse and search listings
+	•	save listings
+	•	comment on listings
+	•	manage user profiles
+	•	support admin moderation and platform oversight
+
+3. Engineering Scope
+The system is divided into three main engineering areas:
+	•	frontend
+	•	backend
+	•	database
+Each team should work from the same functional requirements and shared data model.
+
+4. Functional Modules
+4.1 Authentication Module
+Supports:
+	•	user registration
+	•	user login
+	•	user logout
+	•	session or token-based authentication
+	•	role handling for user and admin
+4.2 Profile Module
+Supports:
+	•	profile viewing
+	•	profile editing
+	•	bio update
+	•	profile picture URL update
+	•	display of user’s listings
+	•	display of saved listings
+4.3 Listing Module
+Supports:
+	•	create listing
+	•	edit own listing
+	•	delete own listing
+	•	view listing feed
+	•	view single listing detail
+	•	listing types: apartment, room, dorm, roommate request
+4.4 Search and Filter Module
+Supports:
+	•	keyword search
+	•	filter by location
+	•	filter by rent range
+	•	filter by listing type
+	•	sorting by newest, lowest rent, highest rent, most saved
+4.5 Saved Listings Module
+Supports:
+	•	save listing
+	•	unsave listing
+	•	prevent duplicate saves
+	•	show save count
+4.6 Comment Module
+Supports:
+	•	add comment to listing
+	•	delete own comment
+	•	admin delete any comment
+	•	show comments on listing detail page
+4.7 Admin Module
+Supports:
+	•	view all users
+	•	view all listings
+	•	hide or delete listings
+	•	suspend or reactivate users
+	•	delete comments
+	•	access analytics dashboard
+4.8 Analytics Module
+Supports:
+	•	total user count
+	•	total listing count
+	•	total comment count
+	•	most saved listings
+	•	most active users
+
+5. Frontend Requirements
+5.1 Frontend Technology Direction
+Recommended frontend implementation:
+	•	HTML templates
+	•	CSS
+	•	JavaScript
+	•	template rendering compatible with FastAPI
+5.2 Required Pages
+The frontend should include the following pages:
+	•	listing feed page
+	•	listing detail page
+	•	create listing page
+	•	edit listing page
+	•	profile page
+	•	saved listings page
+Alex
+	•	admin dashboard page
+	•	admin user management page
+	•	admin listing management page
+	•	landing/home page
+	•	login page
+	•	registration page
+
+5.3 Frontend Functional Requirements
+Authentication UI
+	•	display registration form
+	•	display login form
+	•	show validation errors clearly
+	•	redirect authenticated users appropriately
+Listing Feed UI
+	•	show listing cards with main information
+	•	display title, type, location, rent, timestamp, and save count
+	•	allow search/filter/sort from the feed page
+	•	allow navigation to full listing details
+Listing Detail UI
+	•	show full listing information
+	•	display comments section
+	•	allow users to save/unsave a listing
+	•	allow logged-in users to add comments
+Create/Edit Listing UI
+	•	form fields for title, description, image URL, rent, location, type
+	•	validation for required fields
+	•	edit form pre-filled with existing listing data
+Profile UI
+	•	show user profile details
+	•	show user’s own listings
+	•	show user’s saved listings
+Admin UI
+	•	clearly separate admin-only pages
+	•	provide tables or lists for users, listings, and comments
+	•	provide action buttons for suspend, reactivate, hide, delete
+5.4 Frontend Non-Functional Requirements
+	•	pages should be easy to navigate
+	•	forms should provide clear error messages
+	•	layout should remain readable and organized
+	•	the UI should be simple rather than overly complex
+
+6. Backend Requirements
+6.1 Backend Technology Direction
+Recommended backend implementation:
+	•	FastAPI
+	•	Python
+	•	clear separation of routes, services, and models
+6.2 Backend Responsibilities
+The backend must:
+	•	handle request routing
+	•	validate request data
+	•	enforce authentication and authorization
+	•	communicate with the database
+	•	apply business rules
+	•	return page responses or API responses
+6.3 Core Backend Modules
+Authentication
+	•	register user
+	•	hash passwords securely
+	•	verify login credentials
+	•	maintain authentication state
+	•	store user role
+Users/Profile
+	•	get current user profile
+	•	update profile information
+	•	retrieve user’s listings
+	•	retrieve user’s saved listings
+Listings
+	•	create listing
+	•	edit listing if requester owns listing or is admin
+	•	delete listing if requester owns listing or is admin
+	•	hide listing if requester is admin
+	•	return listing feed with filters and sorting
+	•	return single listing detail
+Saved Listings
+	•	create save relation between user and listing
+	•	remove save relation
+	•	reject duplicate save attempts
+Comments
+	•	create comment
+	•	delete comment if owner or admin
+	•	fetch comments for a listing
+Admin
+	•	list all users
+	•	update user status
+	•	list all listings
+	•	hide/delete listings
+	•	list all comments if needed
+	•	provide analytics query results
+6.4 Authorization Rules
+	•	unauthenticated users may browse public listings only if allowed by system design
+	•	only authenticated users may create listings, save listings, or comment
+	•	only the owner of a listing may edit or delete it unless overridden by admin
+	•	only the owner of a comment may delete it unless overridden by admin
+	•	only admin users may access admin endpoints/pages
+6.5 Validation Rules
+	•	username must be unique
+	•	password must meet minimum requirements
+	•	listing title is required
+	•	listing description is required
+	•	listing type must be one of the allowed values
+	•	rent should be numeric and non-negative
+	•	location is required
+	•	duplicate save for same user and listing must be blocked
+6.6 Suggested Route Groups
+Example route groups:
+	•	/auth/*
+	•	/users/*
+	•	/profile/*
+	•	/listings/*
+	•	/comments/*
+	•	/saved/*
+	•	/admin/*
+	•	/analytics/*
+
+7. Database Requirements
+7.1 Database Technology Direction
+The system should use a relational SQL database.
+7.2 Core Tables
+The following tables are required:
+Users
+Fields should include:
+	•	user_id
+	•	username
+	•	email
+	•	password_hash
+	•	bio
+	•	profile_picture_url
+	•	role
+	•	status
+	•	created_at
+Listings
+Fields should include:
+	•	listing_id
+	•	user_id
+	•	title
+	•	description
+	•	image_url
+	•	rent
+	•	location
+	•	listing_type
+	•	visibility_status
+	•	created_at
+	•	updated_at
+Comments
+Fields should include:
+	•	comment_id
+	•	listing_id
+	•	user_id
+	•	content
+	•	created_at
+Saved_Listings
+Fields should include:
+	•	user_id
+	•	listing_id
+	•	saved_at
+7.3 Required Relationships
+	•	one user to many listings
+	•	one user to many comments
+	•	one listing to many comments
+	•	many users to many saved listings through junction table
+7.4 Constraints
+	•	primary keys on each main table
+	•	foreign keys for related entities
+	•	unique constraint on username
+	•	unique composite constraint on (user_id, listing_id) in saved listings
+	•	controlled values for role, status, and listing type where appropriate
+7.5 Example Enumerated Values
+Possible values may include:
+	•	role: user, admin
+	•	status: active, suspended
+	•	listing_type: apartment, room, dorm, roommate_request
+	•	visibility_status: visible, hidden, closed
+7.6 Query Requirements
+The database layer must support queries for:
+	•	all visible listings
+	•	listing by id
+	•	listings created by a specific user
+	•	saved listings for a specific user
+	•	comments for a listing
+	•	keyword search on listing title/description
+	•	filters by location, type, and rent
+	•	save counts per listing
+	•	total counts for dashboard
+	•	most saved listings
+	•	most active users
+7.7 Data Integrity Rules
+	•	comments cannot exist without valid listing and user references
+	•	listings cannot exist without a valid user reference
+	•	saved listing rows cannot be duplicated for the same user and listing
+	•	suspended users should be restricted from actions according to backend policy
+
+8. Shared Business Rules
+These rules apply across all engineering teams:
+	•	the platform is centered around housing and roommate-related listings
+	•	roommate finding is implemented as a listing type, not as a separate standalone system
+	•	save/favorite replaces the traditional social-media-like feature
+	•	comments are the main built-in communication feature
+	•	admin tools must be restricted to admin users only
+	•	hidden listings must not appear in the public feed
+
+9. Suggested Folder Structure
+A possible project structure:
+roomiehku/
+  app/
+    main.py
+    routes/
+    models/
+    schemas/
+    services/
+    templates/
+    static/
+      css/
+      js/
+    database/
+  docs/
+  requirements.txt
+
+
+10. Testing Expectations
+Each team should verify the following:
+Frontend
+	•	forms render correctly
+	•	required pages are navigable
+	•	search and filter controls behave correctly
+Backend
+	•	authentication works correctly
+	•	unauthorized users cannot access protected actions
+	•	admin permissions are enforced
+	•	validation errors are handled
+Database
+	•	relationships work correctly
+	•	constraints prevent invalid or duplicate data
+	•	dashboard queries return expected results
+
+11. Minimum Deliverable Expectations
+At minimum, the system should demonstrate:
+	•	working registration and login
+	•	listing creation and browsing
+	•	roommate request listings
+	•	save listing feature
+	•	comment feature
+	•	profile page
+	•	admin moderation actions
+	•	basic analytics from database queries
+
+12. Summary
+This document provides the technical requirements for implementing RoomieHKU across frontend, backend, and database engineering. All teams should align their implementation with the shared modules, business rules, and data model so the final system remains consistent and integrated.
+
