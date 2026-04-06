@@ -6,7 +6,7 @@ This document records the main technical decisions for RoomieHKU so the team can
 
 ## Technical Direction
 
-RoomieHKU will be built as a traditional Django web application backed by PostgreSQL.
+RoomieHKU will be built as a traditional Django web application backed by SQLite.
 
 The project prioritizes speed, clarity, and team familiarity. Since the team already knows Django and the project will run locally, it does not need a separate frontend application or a separate API service.
 
@@ -14,7 +14,7 @@ The project prioritizes speed, clarity, and team familiarity. Since the team alr
 
 - **Backend framework:** Django
 - **Language:** Python
-- **Database:** PostgreSQL
+- **Database:** SQLite
 - **Database access layer:** Django ORM
 - **Frontend approach:** Django templates with HTML, CSS, and JavaScript
 - **Styling approach:** Tailwind CSS
@@ -27,7 +27,7 @@ The project prioritizes speed, clarity, and team familiarity. Since the team alr
 RoomieHKU will use a monolithic web application structure.
 
 - Django handles routing, views, forms, authentication, and server-side rendering
-- PostgreSQL stores the application data
+- SQLite stores the application data
 - Django ORM is used to read from and write to the database
 - Django models and migrations define and evolve the schema
 - HTML pages are rendered on the server and returned to the browser
@@ -101,7 +101,7 @@ The project does not require a separate REST API. Most interactions will be hand
 
 ## Database Approach
 
-The system will use PostgreSQL as a relational database because the project centers on clearly related entities such as users, listings, comments, and saved listings.
+The system will use SQLite as a relational database because the project centers on clearly related entities such as users, listings, comments, and saved listings.
 
 Django ORM will be the main database access layer. It will be used to define models, manage relationships, and handle migrations. Raw SQL can still be used where needed for course-related queries or analytics.
 
