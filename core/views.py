@@ -101,7 +101,7 @@ def listing_detail(request, pk):
 @login_required
 def listing_create(request):
     if request.method == "POST":
-        form = PostForm(request.POST)
+        form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
@@ -120,7 +120,7 @@ def listing_update(request, pk):
         return HttpResponseForbidden("You can only edit your own listings.")
 
     if request.method == "POST":
-        form = PostForm(request.POST, instance=post)
+        form = PostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
             form.save()
             messages.success(request, "Listing updated successfully.")
@@ -202,7 +202,7 @@ def delete_comment(request, pk):
 @login_required
 def profile_edit(request):
     if request.method == "POST":
-        form = ProfileForm(request.POST, instance=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Profile updated.")

@@ -25,7 +25,7 @@ erDiagram
         string email "Contact Email"
         string phone_number "Contact Phone (Optional)"
         text bio "User Introduction"
-        string profile_photo "URL to image"
+        string profile_photo "Uploaded image path"
     }
 
     POST {
@@ -33,7 +33,7 @@ erDiagram
         int author_id FK "References User"
         string title
         text description
-        string image_url "Mandatory visual content"
+        string image_url "Uploaded listing image path"
         string listing_type "Apartment / Dorm / Roommate"
         string location "HKU Vicinity (e.g., Kennedy Town)"
         decimal price "Monthly rent or budget"
@@ -75,7 +75,7 @@ erDiagram
 *   **Key Fields**:
     *   **username**: Unique identifier for authentication (built-in).
     *   **phone_number**: Stores contact details for interested parties (formatted as `CharField` to support international prefixes and leading zeros).
-    *   **profile_photo**: Implemented as a `URLField` for lightweight storage and external image hosting support.
+    *   **profile_photo**: Implemented as an uploaded media file field (`profile_photos/`).
 
 ### B. Post Model (Listing Engine)
 *   **Function**: A unified model handling "Housing Offers" and "Roommate Requests."

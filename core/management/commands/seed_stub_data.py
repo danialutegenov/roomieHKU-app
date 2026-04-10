@@ -1,9 +1,19 @@
 from datetime import date
+from decimal import Decimal
 
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
 from core.models import Comment, Like, Post, SavedListing, User
+
+
+DEMO_IMAGE_BYTES = (
+    b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00"
+    b"\xff\xff\xff!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00"
+    b"\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+)
 
 
 class Command(BaseCommand):
@@ -34,7 +44,7 @@ class Command(BaseCommand):
                 "last_name": "Chan",
                 "bio": "Year 3 student looking for a quiet shared apartment near HKU.",
                 "phone_number": "+85291234567",
-                "profile_photo": "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+                "profile_photo_name": "alice_hku.gif",
                 "is_staff": False,
                 "is_superuser": False,
             },
@@ -46,7 +56,7 @@ class Command(BaseCommand):
                 "last_name": "Wong",
                 "bio": "Exchange student preferring furnished studio options.",
                 "phone_number": "+85292345678",
-                "profile_photo": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+                "profile_photo_name": "brian_hku.gif",
                 "is_staff": False,
                 "is_superuser": False,
             },
@@ -58,7 +68,7 @@ class Command(BaseCommand):
                 "last_name": "Lee",
                 "bio": "Looking for female roommate for next semester.",
                 "phone_number": "+85293456789",
-                "profile_photo": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+                "profile_photo_name": "cynthia_hku.gif",
                 "is_staff": False,
                 "is_superuser": False,
             },
@@ -70,7 +80,7 @@ class Command(BaseCommand):
                 "last_name": "Demo",
                 "bio": "Demo staff moderator account.",
                 "phone_number": "",
-                "profile_photo": "",
+                "profile_photo_name": "staff_demo.gif",
                 "is_staff": True,
                 "is_superuser": True,
             },
@@ -85,24 +95,30 @@ class Command(BaseCommand):
                 "last_name": row["last_name"],
                 "bio": row["bio"],
                 "phone_number": row["phone_number"],
-                "profile_photo": row["profile_photo"] or None,
                 "is_staff": row["is_staff"],
                 "is_superuser": row["is_superuser"],
             }
             user, created = User.objects.get_or_create(username=username, defaults=defaults)
 
+            changed = created
             if not created:
-                changed = False
                 for field, value in defaults.items():
                     if getattr(user, field) != value:
                         setattr(user, field, value)
                         changed = True
-                if changed:
-                    user.save()
+
+            if self._ensure_uploaded_image(
+                field_file=user.profile_photo,
+                relative_name=row["profile_photo_name"],
+            ):
+                changed = True
 
             if not user.check_password(row["password"]):
                 user.set_password(row["password"])
-                user.save(update_fields=["password"])
+                changed = True
+
+            if changed:
+                user.save()
 
             users[username] = user
         return users
@@ -116,10 +132,10 @@ class Command(BaseCommand):
                     "Bright two-bedroom flat with shared kitchen and washer. "
                     "Looking for one tidy roommate."
                 ),
-                "image_url": "https://images.unsplash.com/photo-1493809842364-78817add7ffb",
+                "image_name": "listing-kennedy-town.gif",
                 "listing_type": "Apartment",
                 "location": "Kennedy Town",
-                "price": "9500.00",
+                "price": Decimal("9500.00"),
                 "move_in_date": date(2026, 5, 1),
                 "gender_preference": "N",
                 "lifestyle_notes": "No smoking, quiet after 11pm.",
@@ -130,10 +146,10 @@ class Command(BaseCommand):
                 "description": (
                     "Subletting a dorm bed space for summer. Great for short-term stay."
                 ),
-                "image_url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267",
+                "image_name": "listing-pok-fulam-dorm.gif",
                 "listing_type": "Dorm",
                 "location": "Pok Fu Lam",
-                "price": "4800.00",
+                "price": Decimal("4800.00"),
                 "move_in_date": date(2026, 6, 1),
                 "gender_preference": "N",
                 "lifestyle_notes": "Best for early risers.",
@@ -141,13 +157,11 @@ class Command(BaseCommand):
             {
                 "author": "cynthia_hku",
                 "title": "Female Roommate Needed in Sai Ying Pun",
-                "description": (
-                    "Looking for a female roommate for a modern shared flat."
-                ),
-                "image_url": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
+                "description": "Looking for a female roommate for a modern shared flat.",
+                "image_name": "listing-sai-ying-pun-roommate.gif",
                 "listing_type": "Roommate",
                 "location": "Sai Ying Pun",
-                "price": "7200.00",
+                "price": Decimal("7200.00"),
                 "move_in_date": date(2026, 8, 15),
                 "gender_preference": "F",
                 "lifestyle_notes": "Clean and considerate shared living.",
@@ -156,10 +170,10 @@ class Command(BaseCommand):
                 "author": "alice_hku",
                 "title": "Studio Near HKU MTR Exit B1",
                 "description": "Compact furnished studio, utilities included.",
-                "image_url": "https://images.unsplash.com/photo-1484154218962-a197022b5858",
+                "image_name": "listing-hku-studio.gif",
                 "listing_type": "Apartment",
                 "location": "Shek Tong Tsui",
-                "price": "11000.00",
+                "price": Decimal("11000.00"),
                 "move_in_date": date(2026, 7, 1),
                 "gender_preference": "N",
                 "lifestyle_notes": "Ideal for one person, no pets.",
@@ -168,10 +182,10 @@ class Command(BaseCommand):
                 "author": "brian_hku",
                 "title": "Roommate Search for 3BR in Mid-Levels",
                 "description": "Two HKU postgrads seeking one more roommate.",
-                "image_url": "https://images.unsplash.com/photo-1460317442991-0ec209397118",
+                "image_name": "listing-mid-levels-roommate.gif",
                 "listing_type": "Roommate",
                 "location": "Mid-Levels",
-                "price": "8700.00",
+                "price": Decimal("8700.00"),
                 "move_in_date": date(2026, 9, 1),
                 "gender_preference": "N",
                 "lifestyle_notes": "Shared cooking, study-friendly environment.",
@@ -183,7 +197,6 @@ class Command(BaseCommand):
             author = users[row["author"]]
             defaults = {
                 "description": row["description"],
-                "image_url": row["image_url"],
                 "listing_type": row["listing_type"],
                 "location": row["location"],
                 "price": row["price"],
@@ -196,14 +209,22 @@ class Command(BaseCommand):
                 title=row["title"],
                 defaults=defaults,
             )
+
+            changed = created
             if not created:
-                changed = False
                 for field, value in defaults.items():
                     if getattr(post, field) != value:
                         setattr(post, field, value)
                         changed = True
-                if changed:
-                    post.save()
+
+            if self._ensure_uploaded_image(
+                field_file=post.image_url,
+                relative_name=row["image_name"],
+            ):
+                changed = True
+
+            if changed:
+                post.save()
             posts[row["title"]] = post
         return posts
 
@@ -251,3 +272,16 @@ class Command(BaseCommand):
         for post in Post.objects.annotate(total_likes=Count("likes")):
             if post.likes_count != post.total_likes:
                 Post.objects.filter(pk=post.pk).update(likes_count=post.total_likes)
+
+    def _ensure_uploaded_image(self, field_file, relative_name):
+        upload_to = field_file.field.upload_to
+        upload_prefix = upload_to if upload_to.endswith("/") else f"{upload_to}/"
+        storage_name = f"{upload_prefix}{relative_name}"
+
+        if not default_storage.exists(storage_name):
+            default_storage.save(storage_name, ContentFile(DEMO_IMAGE_BYTES))
+
+        if field_file.name != storage_name:
+            field_file.name = storage_name
+            return True
+        return False

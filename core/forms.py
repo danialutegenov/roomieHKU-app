@@ -30,6 +30,7 @@ class PostForm(forms.ModelForm):
         )
         widgets = {
             "move_in_date": forms.DateInput(attrs={"type": "date"}),
+            "image_url": forms.ClearableFileInput(attrs={"accept": "image/*"}),
         }
 
 
@@ -37,6 +38,9 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ("email", "bio", "phone_number", "profile_photo")
+        widgets = {
+            "profile_photo": forms.ClearableFileInput(attrs={"accept": "image/*"}),
+        }
 
 
 class ListingFilterForm(forms.Form):

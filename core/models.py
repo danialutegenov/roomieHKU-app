@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.core.validators import MinValueValidator
 
 
@@ -19,7 +20,12 @@ class User(AbstractUser):
 
     # User profile details
     bio = models.TextField(blank=True)
-    profile_photo = models.URLField(max_length=500, null=True, blank=True)
+    profile_photo = models.FileField(
+        upload_to="profile_photos/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
+    )
 
     def __str__(self):
         return self.username
@@ -46,7 +52,11 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image_url = models.URLField(max_length=500, help_text="Core: Visual representation")
+    image_url = models.FileField(
+        upload_to="listing_images/",
+        help_text="Upload listing image",
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
+    )
 
     # RoomieHKU Business Logic
     listing_type = models.CharField(max_length=20, choices=LISTING_TYPE_CHOICES)

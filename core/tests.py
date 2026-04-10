@@ -1,9 +1,19 @@
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 
 from .models import Comment, Like, Post, SavedListing, User
+
+
+def make_uploaded_image(filename):
+    image_bytes = (
+        b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00"
+        b"\xff\xff\xff!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00"
+        b"\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+    )
+    return SimpleUploadedFile(filename, image_bytes, content_type="image/gif")
 
 
 class CoreModelTests(TestCase):
@@ -22,7 +32,7 @@ class CoreModelTests(TestCase):
             author=self.author,
             title="Near HKU Station",
             description="Two-bedroom flat with shared kitchen.",
-            image_url="https://example.com/listing.jpg",
+            image_url=make_uploaded_image("coremodel-listing.gif"),
             listing_type="Apartment",
             location="Kennedy Town",
             price="9500.00",
@@ -43,7 +53,7 @@ class CoreModelTests(TestCase):
             author=self.author,
             title="Invalid Price Listing",
             description="Should fail validation.",
-            image_url="https://example.com/invalid.jpg",
+            image_url=make_uploaded_image("invalid-price.gif"),
             listing_type="Roommate",
             location="Sai Ying Pun",
             price="-1.00",
@@ -112,7 +122,7 @@ class ListingAndPermissionTests(TestCase):
             author=self.author,
             title="Near HKU Station",
             description="Two-bedroom flat with shared kitchen.",
-            image_url="https://example.com/listing.jpg",
+            image_url=make_uploaded_image("perm-listing.gif"),
             listing_type="Apartment",
             location="Kennedy Town",
             price="9500.00",
@@ -165,7 +175,7 @@ class ListingFilterTests(TestCase):
             author=author,
             title="Studio near HKU",
             description="Quiet and clean studio",
-            image_url="https://example.com/1.jpg",
+            image_url=make_uploaded_image("filter-1.gif"),
             listing_type="Apartment",
             location="Kennedy Town",
             price="7000.00",
@@ -174,7 +184,7 @@ class ListingFilterTests(TestCase):
             author=author,
             title="Dorm bed space",
             description="Affordable dorm option",
-            image_url="https://example.com/2.jpg",
+            image_url=make_uploaded_image("filter-2.gif"),
             listing_type="Dorm",
             location="Pok Fu Lam",
             price="4000.00",
@@ -183,7 +193,7 @@ class ListingFilterTests(TestCase):
             author=author,
             title="Roommate wanted",
             description="Looking for tidy roommate",
-            image_url="https://example.com/3.jpg",
+            image_url=make_uploaded_image("filter-3.gif"),
             listing_type="Roommate",
             location="Kennedy Town",
             price="5500.00",
@@ -219,7 +229,7 @@ class PostCrudTests(TestCase):
             author=self.user,
             title="Initial Listing",
             description="Initial description",
-            image_url="https://example.com/listing.jpg",
+            image_url=make_uploaded_image("crud-initial.gif"),
             listing_type="Apartment",
             location="Sai Ying Pun",
             price="8000.00",
@@ -232,7 +242,7 @@ class PostCrudTests(TestCase):
             {
                 "title": "New Listing",
                 "description": "Created through test",
-                "image_url": "https://example.com/new.jpg",
+                "image_url": make_uploaded_image("crud-new.gif"),
                 "listing_type": "Dorm",
                 "location": "Kennedy Town",
                 "price": "6000.00",
@@ -284,7 +294,7 @@ class InteractionTests(TestCase):
             author=self.author,
             title="Likeable Listing",
             description="Description",
-            image_url="https://example.com/listing.jpg",
+            image_url=make_uploaded_image("interaction-listing.gif"),
             listing_type="Apartment",
             location="Kennedy Town",
             price="9500.00",
@@ -344,7 +354,7 @@ class ProfileAndDashboardTests(TestCase):
             author=self.user,
             title="Dashboard Post",
             description="Desc",
-            image_url="https://example.com/listing.jpg",
+            image_url=make_uploaded_image("dashboard-listing.gif"),
             listing_type="Apartment",
             location="Pok Fu Lam",
             price="7000.00",
@@ -361,7 +371,7 @@ class ProfileAndDashboardTests(TestCase):
                 "email": "updated@example.com",
                 "bio": "Updated bio",
                 "phone_number": "12345678",
-                "profile_photo": "https://example.com/photo.jpg",
+                "profile_photo": make_uploaded_image("profile-photo.gif"),
             },
         )
         self.assertRedirects(response, reverse("core:profile_edit"))
@@ -369,7 +379,7 @@ class ProfileAndDashboardTests(TestCase):
         self.assertEqual(self.user.email, "updated@example.com")
         self.assertEqual(self.user.bio, "Updated bio")
         self.assertEqual(self.user.phone_number, "12345678")
-        self.assertEqual(self.user.profile_photo, "https://example.com/photo.jpg")
+        self.assertIn("profile_photos/", self.user.profile_photo.name)
 
     def test_dashboard_access_and_context(self):
         anonymous_response = self.client.get(reverse("core:dashboard_home"))

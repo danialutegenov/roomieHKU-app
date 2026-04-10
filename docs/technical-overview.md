@@ -207,6 +207,4 @@ For the current project scope, the team will keep the system in one Django app t
 
 ## Open Decisions
 
-The following items should still be finalized by the team:
-
-- whether listing images will use uploaded files or image URLs only
+No blocking technical decisions remain for the current MVP scope.
