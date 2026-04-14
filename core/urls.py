@@ -22,4 +22,10 @@ urlpatterns = [
     path("app/comments/<int:pk>/delete/", views.delete_comment, name="delete_comment"),
     path("app/profile/edit/", views.profile_edit, name="profile_edit"),
     path("dashboard/", views.dashboard_home, name="dashboard_home"),
+    path("dashboard/users/<int:user_id>/suspend/", views.suspend_user, name="suspend_user"),
+    path("dashboard/users/<int:user_id>/reactivate/", views.reactivate_user, name="reactivate_user"),
+    path("dashboard/listings/<int:post_id>/hide/", views.hide_listing, name="hide_listing"),
+    path("dashboard/listings/<int:post_id>/reactivate/", views.reactivate_listing, name="reactivate_listing"),
+    path("dashboard/listings/<int:post_id>/delete/", views.delete_listing, name="delete_listing"),
+    path("dashboard/comments/<int:comment_id>/delete/", views.delete_comment, name="delete_comment"),
 ]
