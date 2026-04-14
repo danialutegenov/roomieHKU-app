@@ -10,7 +10,6 @@ from .models import Comment, Post, SavedListing
 User = get_user_model()
 
 
-@staff_member_required
 def app_home(request):
     return render(request, "core/app/home.html")
 
