@@ -137,16 +137,11 @@ class Like(models.Model):
 
 
 class SavedListing(models.Model):
-    """
-    Maps to the SAVED_LISTING table in the ER diagram.
-    Allows users to bookmark listings.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="saved_items")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="saved_by")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Prevents duplicate saves
         constraints = [
-            models.UniqueConstraint(fields=['user', 'post'], name='unique_savedlisting_user_post'),
+            models.UniqueConstraint(fields=["user", "post"], name="unique_savedlisting_user_post"),
         ]
