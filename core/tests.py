@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
@@ -134,6 +136,12 @@ class ListingAndPermissionTests(TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(detail_response.status_code, 200)
 
+    def test_listing_detail_increments_views_count(self):
+        self.assertEqual(self.post.views_count, 0)
+        self.client.get(reverse("core:listing_detail", args=[self.post.pk]))
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.views_count, 1)
+
     def test_anonymous_user_redirected_for_protected_routes(self):
         protected_routes = [
             reverse("core:listing_create"),
@@ -216,6 +224,14 @@ class ListingFilterTests(TestCase):
         )
         post_ids = set(response.context["posts"].values_list("id", flat=True))
         self.assertEqual(post_ids, {self.post_3.id})
+
+    def test_market_snapshot_aggregates_follow_filters(self):
+        response = self.client.get(reverse("core:listing_list"), {"location": "Kennedy"})
+        snapshot = response.context["market_snapshot"]
+        self.assertEqual(snapshot["total_results"], 2)
+        self.assertEqual(snapshot["min_price"], Decimal("5500"))
+        self.assertEqual(snapshot["max_price"], Decimal("7000"))
+        self.assertEqual(snapshot["avg_price"], Decimal("6250"))
 
 
 class PostCrudTests(TestCase):
@@ -396,6 +412,25 @@ class ProfileAndDashboardTests(TestCase):
         self.assertIn("stats", staff_response.context)
         self.assertIn("recent_posts", staff_response.context)
         self.assertIn("recent_comments", staff_response.context)
+        self.assertIn("location_demand", staff_response.context)
+        self.assertIn("weekly_activity", staff_response.context)
+        self.assertIn("top_viewed_listing", staff_response.context)
+        self.assertEqual(staff_response.context["total_views"], 0)
+
+        location_rows = list(staff_response.context["location_demand"])
+        self.assertEqual(len(location_rows), 1)
+        self.assertEqual(location_rows[0]["location"], "Pok Fu Lam")
+        self.assertEqual(location_rows[0]["listing_count"], 1)
+
+        weekly_rows = staff_response.context["weekly_activity"]
+        self.assertEqual(len(weekly_rows), 8)
+        self.assertEqual(sum(row["posts"] for row in weekly_rows), 1)
+        self.assertEqual(sum(row["comments"] for row in weekly_rows), 1)
+        self.assertEqual(sum(row["likes"] for row in weekly_rows), 1)
+
+        top_viewed = staff_response.context["top_viewed_listing"]
+        self.assertIsNotNone(top_viewed)
+        self.assertEqual(top_viewed.pk, self.post.pk)
 
     def test_staff_moderation_actions(self):
         self.client.login(username="staffuser", password="password123")

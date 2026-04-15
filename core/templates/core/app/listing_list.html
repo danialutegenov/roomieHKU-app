@@ -43,6 +43,31 @@
     {% endif %}
   </form>
 
+  <section class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-xs uppercase tracking-wide text-slate-500">Matching Listings</p>
+      <p class="mt-2 text-2xl font-semibold">{{ market_snapshot.total_results }}</p>
+    </article>
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-xs uppercase tracking-wide text-slate-500">Average Price</p>
+      <p class="mt-2 text-2xl font-semibold">
+        {% if market_snapshot.avg_price %}HKD {{ market_snapshot.avg_price|floatformat:0 }}{% else %}-{% endif %}
+      </p>
+    </article>
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-xs uppercase tracking-wide text-slate-500">Min Price</p>
+      <p class="mt-2 text-2xl font-semibold">
+        {% if market_snapshot.min_price %}HKD {{ market_snapshot.min_price|floatformat:0 }}{% else %}-{% endif %}
+      </p>
+    </article>
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-xs uppercase tracking-wide text-slate-500">Max Price</p>
+      <p class="mt-2 text-2xl font-semibold">
+        {% if market_snapshot.max_price %}HKD {{ market_snapshot.max_price|floatformat:0 }}{% else %}-{% endif %}
+      </p>
+    </article>
+  </section>
+
   <section class="grid gap-4">
     {% for post in posts %}
       <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">

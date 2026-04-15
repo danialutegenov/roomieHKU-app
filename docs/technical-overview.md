@@ -76,6 +76,7 @@ The project does not require a separate REST API. Most interactions will be hand
 - keyword-based search
 - filtering by listing attributes such as type, location, or rent
 - sorting and feed presentation
+- lightweight market snapshot metrics on filtered listing results (count and price range/average)
 
 ### Saved Listings
 
@@ -92,6 +93,7 @@ The project does not require a separate REST API. Most interactions will be hand
 - moderation of users, listings, and comments
 - access to simple platform statistics
 - moderation actions include user suspend/reactivate, listing hide/reactivate/delete, and comment deletion
+- analytics views for location demand, weekly activity trends, and top-viewed listings
 
 ### Database Management
 
