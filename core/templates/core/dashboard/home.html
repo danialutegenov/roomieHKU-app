@@ -19,7 +19,7 @@
     </section>
   {% endif %}
 
-  <section class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <section class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
       <p class="text-sm text-slate-500">Total users</p>
       <p class="mt-2 text-2xl font-semibold">{{ total_users }}</p>
@@ -34,9 +34,27 @@
       <p class="text-sm text-slate-500">Total comments</p>
       <p class="mt-2 text-2xl font-semibold">{{ total_comments }}</p>
     </article>
+
+    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm text-slate-500">Total listing views</p>
+      <p class="mt-2 text-2xl font-semibold">{{ total_views }}</p>
+      <p class="mt-1 text-xs text-slate-500">Counted from listing detail page visits.</p>
+    </article>
   </section>
 
-  <section class="mt-8 grid gap-6 xl:grid-cols-2">
+  <section class="mt-8 grid gap-6 xl:grid-cols-3">
+    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Top Viewed Listing</h2>
+      {% if top_viewed_listing %}
+        <p class="mt-3 text-sm text-slate-500">Most viewed listing detail page so far.</p>
+        <p class="mt-3 text-base font-semibold">{{ top_viewed_listing.title }}</p>
+        <p class="mt-1 text-sm text-slate-600">{{ top_viewed_listing.author.username }} • {{ top_viewed_listing.location }}</p>
+        <p class="mt-4 text-2xl font-bold">{{ top_viewed_listing.views_count }} views</p>
+      {% else %}
+        <p class="mt-4 text-sm text-slate-500">No listing views yet.</p>
+      {% endif %}
+    </article>
+
     <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <h2 class="text-lg font-semibold">Most Saved Listings</h2>
       <div class="mt-4 overflow-x-auto">
@@ -88,6 +106,64 @@
             {% empty %}
               <tr>
                 <td colspan="4" class="px-3 py-4 text-slate-500">No activity yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="mt-8 grid gap-6 xl:grid-cols-2">
+    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Demand by Location</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b border-slate-200 text-left text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Location</th>
+              <th class="px-3 py-2">Listings</th>
+              <th class="px-3 py-2">Avg Price</th>
+              <th class="px-3 py-2">Avg Views</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in location_demand %}
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-2 font-medium">{{ row.location }}</td>
+                <td class="px-3 py-2">{{ row.listing_count }}</td>
+                <td class="px-3 py-2">HKD {{ row.avg_price|floatformat:0 }}</td>
+                <td class="px-3 py-2">{{ row.avg_views|floatformat:1 }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="px-3 py-4 text-slate-500">No listing demand data yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Weekly Activity (Last 8 Weeks)</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b border-slate-200 text-left text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Week Start</th>
+              <th class="px-3 py-2">Posts</th>
+              <th class="px-3 py-2">Comments</th>
+              <th class="px-3 py-2">Likes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in weekly_activity %}
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-2 font-medium">{{ row.week_start|date:"Y-m-d" }}</td>
+                <td class="px-3 py-2">{{ row.posts }}</td>
+                <td class="px-3 py-2">{{ row.comments }}</td>
+                <td class="px-3 py-2">{{ row.likes }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -236,7 +312,7 @@
               <td class="px-3 py-3 text-slate-700">{{ comment.content }}</td>
               <td class="px-3 py-3 text-slate-600">{{ comment.created_at|date:"Y-m-d H:i" }}</td>
               <td class="px-3 py-3">
-                <form method="post" action="{% url 'core:delete_comment' comment.id %}">
+                <form method="post" action="{% url 'core:dashboard_delete_comment' comment.id %}">
                   {% csrf_token %}
                   <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
                     Delete

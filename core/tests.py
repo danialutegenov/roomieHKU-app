@@ -1,8 +1,11 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Comment, Like, Post, SavedListing, User
 
@@ -134,6 +137,19 @@ class ListingAndPermissionTests(TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(detail_response.status_code, 200)
 
+    def test_listing_detail_increments_views_count(self):
+        self.assertEqual(self.post.views_count, 0)
+        self.client.get(reverse("core:listing_detail", args=[self.post.pk]))
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.views_count, 1)
+
+    def test_feed_card_shows_author_image_and_timestamp(self):
+        response = self.client.get(reverse("core:listing_list"))
+        self.assertContains(response, self.author.username)
+        self.assertContains(response, self.post.image_url.url)
+        rendered_timestamp = timezone.localtime(self.post.created_at).strftime("%Y-%m-%d %H:%M")
+        self.assertContains(response, rendered_timestamp)
+
     def test_anonymous_user_redirected_for_protected_routes(self):
         protected_routes = [
             reverse("core:listing_create"),
@@ -162,6 +178,45 @@ class ListingAndPermissionTests(TestCase):
         response = self.client.post(reverse("core:delete_comment", args=[comment.pk]))
         self.assertEqual(response.status_code, 403)
         self.assertTrue(Comment.objects.filter(pk=comment.pk).exists())
+
+    def test_user_post_history_requires_login_and_scopes_to_current_user(self):
+        anonymous_response = self.client.get(reverse("core:user_post_history"))
+        self.assertEqual(anonymous_response.status_code, 302)
+        self.assertTrue(anonymous_response.url.startswith(reverse("core:login")))
+
+        other_post = Post.objects.create(
+            author=self.other_user,
+            title="Other User Post",
+            description="Should not appear in author history",
+            image_url=make_uploaded_image("history-other.gif"),
+            listing_type="Dorm",
+            location="Sai Ying Pun",
+            price="6200.00",
+        )
+
+        self.client.login(username="author1", password="password123")
+        history_response = self.client.get(reverse("core:user_post_history"))
+        self.assertEqual(history_response.status_code, 200)
+        post_ids = set(history_response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(post_ids, {self.post.id})
+        self.assertNotIn(other_post.id, post_ids)
+
+    def test_user_post_history_sort_by_popularity(self):
+        second_post = Post.objects.create(
+            author=self.author,
+            title="Second Author Post",
+            description="Second post for popularity sorting",
+            image_url=make_uploaded_image("history-second.gif"),
+            listing_type="Apartment",
+            location="Kennedy Town",
+            price="9800.00",
+        )
+        Like.objects.create(user=self.other_user, post=second_post)
+
+        self.client.login(username="author1", password="password123")
+        response = self.client.get(reverse("core:user_post_history"), {"sort_by": "popular"})
+        ordered_ids = list(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(ordered_ids[0], second_post.id)
 
 
 class ListingFilterTests(TestCase):
@@ -216,6 +271,26 @@ class ListingFilterTests(TestCase):
         )
         post_ids = set(response.context["posts"].values_list("id", flat=True))
         self.assertEqual(post_ids, {self.post_3.id})
+
+    def test_market_snapshot_aggregates_follow_filters(self):
+        response = self.client.get(reverse("core:listing_list"), {"location": "Kennedy"})
+        snapshot = response.context["market_snapshot"]
+        self.assertEqual(snapshot["total_results"], 2)
+        self.assertEqual(snapshot["min_price"], Decimal("5500"))
+        self.assertEqual(snapshot["max_price"], Decimal("7000"))
+        self.assertEqual(snapshot["avg_price"], Decimal("6250"))
+
+    def test_sort_by_popularity_orders_feed(self):
+        user_1 = User.objects.create_user(username="fan1", password="password123", email="fan1@example.com")
+        user_2 = User.objects.create_user(username="fan2", password="password123", email="fan2@example.com")
+
+        Like.objects.create(user=user_1, post=self.post_3)
+        Like.objects.create(user=user_2, post=self.post_3)
+        Like.objects.create(user=user_1, post=self.post_1)
+
+        response = self.client.get(reverse("core:listing_list"), {"sort_by": "popular"})
+        ordered_ids = list(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(ordered_ids[0], self.post_3.id)
 
 
 class PostCrudTests(TestCase):
@@ -359,7 +434,7 @@ class ProfileAndDashboardTests(TestCase):
             location="Pok Fu Lam",
             price="7000.00",
         )
-        Comment.objects.create(post=self.post, author=self.user, content="Sample comment")
+        self.comment = Comment.objects.create(post=self.post, author=self.user, content="Sample comment")
         Like.objects.create(user=self.staff_user, post=self.post)
         SavedListing.objects.create(user=self.staff_user, post=self.post)
 
@@ -396,3 +471,90 @@ class ProfileAndDashboardTests(TestCase):
         self.assertIn("stats", staff_response.context)
         self.assertIn("recent_posts", staff_response.context)
         self.assertIn("recent_comments", staff_response.context)
+        self.assertIn("location_demand", staff_response.context)
+        self.assertIn("weekly_activity", staff_response.context)
+        self.assertIn("top_viewed_listing", staff_response.context)
+        self.assertEqual(staff_response.context["total_views"], 0)
+
+        location_rows = list(staff_response.context["location_demand"])
+        self.assertEqual(len(location_rows), 1)
+        self.assertEqual(location_rows[0]["location"], "Pok Fu Lam")
+        self.assertEqual(location_rows[0]["listing_count"], 1)
+
+        weekly_rows = staff_response.context["weekly_activity"]
+        self.assertEqual(len(weekly_rows), 8)
+        self.assertEqual(sum(row["posts"] for row in weekly_rows), 1)
+        self.assertEqual(sum(row["comments"] for row in weekly_rows), 1)
+        self.assertEqual(sum(row["likes"] for row in weekly_rows), 1)
+
+        top_viewed = staff_response.context["top_viewed_listing"]
+        self.assertIsNotNone(top_viewed)
+        self.assertEqual(top_viewed.pk, self.post.pk)
+
+    def test_staff_moderation_actions(self):
+        self.client.login(username="staffuser", password="password123")
+
+        suspend_response = self.client.post(reverse("core:suspend_user", args=[self.user.pk]))
+        self.assertRedirects(suspend_response, reverse("core:dashboard_home"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_suspended)
+        self.assertIsNotNone(self.user.suspended_at)
+
+        reactivate_user_response = self.client.post(reverse("core:reactivate_user", args=[self.user.pk]))
+        self.assertRedirects(reactivate_user_response, reverse("core:dashboard_home"))
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_suspended)
+        self.assertIsNone(self.user.suspended_at)
+
+        hide_response = self.client.post(reverse("core:hide_listing", args=[self.post.pk]))
+        self.assertRedirects(hide_response, reverse("core:dashboard_home"))
+        self.post.refresh_from_db()
+        self.assertTrue(self.post.is_hidden)
+        self.assertIsNotNone(self.post.hidden_at)
+
+        reactivate_listing_response = self.client.post(reverse("core:reactivate_listing", args=[self.post.pk]))
+        self.assertRedirects(reactivate_listing_response, reverse("core:dashboard_home"))
+        self.post.refresh_from_db()
+        self.assertFalse(self.post.is_hidden)
+        self.assertIsNone(self.post.hidden_at)
+
+        delete_comment_response = self.client.post(
+            reverse("core:dashboard_delete_comment", args=[self.comment.pk])
+        )
+        self.assertRedirects(delete_comment_response, reverse("core:dashboard_home"))
+        self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
+
+        delete_post = Post.objects.create(
+            author=self.user,
+            title="Dashboard Delete Post",
+            description="To be deleted by staff",
+            image_url=make_uploaded_image("dashboard-delete.gif"),
+            listing_type="Dorm",
+            location="Kennedy Town",
+            price="5000.00",
+        )
+        delete_listing_response = self.client.post(reverse("core:delete_listing", args=[delete_post.pk]))
+        self.assertRedirects(delete_listing_response, reverse("core:dashboard_home"))
+        self.assertFalse(Post.objects.filter(pk=delete_post.pk).exists())
+
+    def test_dashboard_moderation_requires_staff(self):
+        self.client.login(username="normaluser", password="password123")
+        moderation_routes = [
+            reverse("core:suspend_user", args=[self.user.pk]),
+            reverse("core:reactivate_user", args=[self.user.pk]),
+            reverse("core:hide_listing", args=[self.post.pk]),
+            reverse("core:reactivate_listing", args=[self.post.pk]),
+            reverse("core:delete_listing", args=[self.post.pk]),
+            reverse("core:dashboard_delete_comment", args=[self.comment.pk]),
+        ]
+
+        for route in moderation_routes:
+            response = self.client.post(route)
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(response.url.startswith(reverse("admin:login")))
+
+        self.user.refresh_from_db()
+        self.post.refresh_from_db()
+        self.assertFalse(self.user.is_suspended)
+        self.assertFalse(self.post.is_hidden)
+        self.assertTrue(Comment.objects.filter(pk=self.comment.pk).exists())
