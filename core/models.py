@@ -26,6 +26,10 @@ class User(AbstractUser):
         blank=True,
         validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
     )
+    
+    # Admin moderation
+    is_suspended = models.BooleanField(default=False)
+    suspended_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.username
@@ -81,6 +85,8 @@ class Post(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
 
     # Core Feature: Timestamp
+    is_hidden = models.BooleanField(default=False)
+    hidden_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -96,7 +102,6 @@ class Post(models.Model):
                 name='post_price_gte_0'
             ),
         ]
-
     def __str__(self):
         return f"{self.listing_type}: {self.title}"
 
@@ -132,16 +137,11 @@ class Like(models.Model):
 
 
 class SavedListing(models.Model):
-    """
-    Maps to the SAVED_LISTING table in the ER diagram.
-    Allows users to bookmark listings.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="saved_items")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="saved_by")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Prevents duplicate saves
         constraints = [
-            models.UniqueConstraint(fields=['user', 'post'], name='unique_savedlisting_user_post'),
+            models.UniqueConstraint(fields=["user", "post"], name="unique_savedlisting_user_post"),
         ]
