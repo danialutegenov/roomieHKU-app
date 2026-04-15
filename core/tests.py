@@ -158,6 +158,7 @@ class ListingAndPermissionTests(TestCase):
             reverse("core:toggle_like", args=[self.post.pk]),
             reverse("core:toggle_save", args=[self.post.pk]),
             reverse("core:add_comment", args=[self.post.pk]),
+            reverse("core:saved_listings"),
             reverse("core:profile_edit"),
         ]
         for route in protected_routes:
@@ -217,6 +218,69 @@ class ListingAndPermissionTests(TestCase):
         response = self.client.get(reverse("core:user_post_history"), {"sort_by": "popular"})
         ordered_ids = list(response.context["posts"].values_list("id", flat=True))
         self.assertEqual(ordered_ids[0], second_post.id)
+
+    def test_saved_listings_requires_login_and_scopes_to_current_user(self):
+        anonymous_response = self.client.get(reverse("core:saved_listings"))
+        self.assertEqual(anonymous_response.status_code, 302)
+        self.assertTrue(anonymous_response.url.startswith(reverse("core:login")))
+
+        other_saved_post = Post.objects.create(
+            author=self.author,
+            title="Saved for another user",
+            description="Should not appear in other user's saved page",
+            image_url=make_uploaded_image("saved-other-user.gif"),
+            listing_type="Dorm",
+            location="Sai Ying Pun",
+            price="6200.00",
+        )
+        hidden_saved_post = Post.objects.create(
+            author=self.author,
+            title="Hidden saved listing",
+            description="Should not appear because listing is hidden",
+            image_url=make_uploaded_image("saved-hidden.gif"),
+            listing_type="Apartment",
+            location="Kennedy Town",
+            price="7300.00",
+            is_hidden=True,
+            hidden_at=timezone.now(),
+        )
+
+        SavedListing.objects.create(user=self.other_user, post=self.post)
+        SavedListing.objects.create(user=self.other_user, post=hidden_saved_post)
+        SavedListing.objects.create(user=self.author, post=other_saved_post)
+
+        self.client.login(username="user2", password="password123")
+        response = self.client.get(reverse("core:saved_listings"))
+        self.assertEqual(response.status_code, 200)
+
+        post_ids = set(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(post_ids, {self.post.id})
+        self.assertEqual(response.context["saved_count"], 1)
+
+    def test_saved_listings_sort_by_popularity(self):
+        second_saved_post = Post.objects.create(
+            author=self.author,
+            title="Second saved listing",
+            description="Should rank first on popular sort",
+            image_url=make_uploaded_image("saved-popular.gif"),
+            listing_type="Apartment",
+            location="Kennedy Town",
+            price="9900.00",
+        )
+        fan = User.objects.create_user(
+            username="savedfan",
+            password="password123",
+            email="savedfan@example.com",
+        )
+
+        SavedListing.objects.create(user=self.other_user, post=self.post)
+        SavedListing.objects.create(user=self.other_user, post=second_saved_post)
+        Like.objects.create(user=fan, post=second_saved_post)
+
+        self.client.login(username="user2", password="password123")
+        response = self.client.get(reverse("core:saved_listings"), {"sort_by": "popular"})
+        ordered_ids = list(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(ordered_ids[0], second_saved_post.id)
 
 
 class ListingFilterTests(TestCase):

@@ -1,111 +1,89 @@
 {% extends 'core/dashboard/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-7xl px-6 py-12">
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-      <p class="mt-2 text-slate-600">Internal frontend for moderation and platform oversight.</p>
-    </div>
-  </div>
+<main class="page-shell">
+  <section class="hero">
+    <h1>Admin Operations Dashboard</h1>
+    <p>
+      Moderate listings and users, monitor engagement trends, and review platform health
+      across discovery, interaction, and content safety.
+    </p>
+  </section>
 
-  {% if messages %}
-    <section class="mt-6 space-y-3">
-      {% for message in messages %}
-        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </section>
-  {% endif %}
-
-  <section class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Total users</p>
-      <p class="mt-2 text-2xl font-semibold">{{ total_users }}</p>
+  <section class="metric-grid mt-4">
+    <article class="metric-card">
+      <p class="metric-label">Total Users</p>
+      <p class="metric-value">{{ total_users }}</p>
+      <p class="metric-hint">Registered accounts</p>
     </article>
 
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Total listings</p>
-      <p class="mt-2 text-2xl font-semibold">{{ total_listings }}</p>
+    <article class="metric-card">
+      <p class="metric-label">Total Listings</p>
+      <p class="metric-value">{{ total_listings }}</p>
+      <p class="metric-hint">All-time listing volume</p>
     </article>
 
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Total comments</p>
-      <p class="mt-2 text-2xl font-semibold">{{ total_comments }}</p>
+    <article class="metric-card">
+      <p class="metric-label">Total Comments</p>
+      <p class="metric-value">{{ total_comments }}</p>
+      <p class="metric-hint">Community discussion activity</p>
     </article>
 
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Total listing views</p>
-      <p class="mt-2 text-2xl font-semibold">{{ total_views }}</p>
-      <p class="mt-1 text-xs text-slate-500">Counted from listing detail page visits.</p>
+    <article class="metric-card">
+      <p class="metric-label">Listing Views</p>
+      <p class="metric-value">{{ total_views }}</p>
+      <p class="metric-hint">Detail page visits</p>
     </article>
   </section>
 
-  <section class="mt-8 grid gap-6 xl:grid-cols-3">
-    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 class="text-lg font-semibold">Top Viewed Listing</h2>
+  <section class="layout-grid two-col mt-4">
+    <article class="panel">
+      <div class="section-title">
+        <div>
+          <h2>Top Viewed Listing</h2>
+          <p>Most visited listing detail page.</p>
+        </div>
+      </div>
+
       {% if top_viewed_listing %}
-        <p class="mt-3 text-sm text-slate-500">Most viewed listing detail page so far.</p>
-        <p class="mt-3 text-base font-semibold">{{ top_viewed_listing.title }}</p>
-        <p class="mt-1 text-sm text-slate-600">{{ top_viewed_listing.author.username }} • {{ top_viewed_listing.location }}</p>
-        <p class="mt-4 text-2xl font-bold">{{ top_viewed_listing.views_count }} views</p>
+        <p class="listing-meta">{{ top_viewed_listing.get_listing_type_display }} • {{ top_viewed_listing.location }}</p>
+        <h3 class="listing-title mt-1">{{ top_viewed_listing.title }}</h3>
+        <p class="listing-byline mt-1">By {{ top_viewed_listing.author.username }}</p>
+        <p class="metric-value mt-3">{{ top_viewed_listing.views_count }} views</p>
       {% else %}
-        <p class="mt-4 text-sm text-slate-500">No listing views yet.</p>
+        <p class="empty-state">No views have been recorded yet.</p>
       {% endif %}
     </article>
 
-    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 class="text-lg font-semibold">Most Saved Listings</h2>
-      <div class="mt-4 overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="border-b border-slate-200 text-left text-slate-500">
-            <tr>
-              <th class="px-3 py-2">Title</th>
-              <th class="px-3 py-2">Author</th>
-              <th class="px-3 py-2">Saves</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for listing in most_saved_listings %}
-              <tr class="border-b border-slate-100">
-                <td class="px-3 py-2 font-medium">{{ listing.title }}</td>
-                <td class="px-3 py-2 text-slate-600">{{ listing.author.username }}</td>
-                <td class="px-3 py-2">{{ listing.saved_count }}</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="3" class="px-3 py-4 text-slate-500">No saved listings yet.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <article class="panel">
+      <div class="section-title">
+        <div>
+          <h2>Most Active Users</h2>
+          <p>Ranked by posts + comments.</p>
+        </div>
       </div>
-    </article>
 
-    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 class="text-lg font-semibold">Most Active Users</h2>
-      <div class="mt-4 overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="border-b border-slate-200 text-left text-slate-500">
+      <div class="table-wrap">
+        <table class="data-table table-compact">
+          <thead>
             <tr>
-              <th class="px-3 py-2">Username</th>
-              <th class="px-3 py-2">Posts</th>
-              <th class="px-3 py-2">Comments</th>
-              <th class="px-3 py-2">Total</th>
+              <th>Username</th>
+              <th>Posts</th>
+              <th>Comments</th>
+              <th>Total</th>
             </tr>
           </thead>
           <tbody>
             {% for user in most_active_users %}
-              <tr class="border-b border-slate-100">
-                <td class="px-3 py-2 font-medium">{{ user.username }}</td>
-                <td class="px-3 py-2">{{ user.post_count }}</td>
-                <td class="px-3 py-2">{{ user.comment_count }}</td>
-                <td class="px-3 py-2">{{ user.total_activity }}</td>
+              <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.post_count }}</td>
+                <td>{{ user.comment_count }}</td>
+                <td>{{ user.total_activity }}</td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="4" class="px-3 py-4 text-slate-500">No activity yet.</td>
+                <td colspan="4">No activity yet.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -114,56 +92,70 @@
     </article>
   </section>
 
-  <section class="mt-8 grid gap-6 xl:grid-cols-2">
-    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 class="text-lg font-semibold">Demand by Location</h2>
-      <div class="mt-4 overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="border-b border-slate-200 text-left text-slate-500">
+  <section class="layout-grid two-col mt-4">
+    <article class="panel">
+      <div class="section-title">
+        <div>
+          <h2>Most Saved Listings</h2>
+          <p>Listings with strongest bookmark intent.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
             <tr>
-              <th class="px-3 py-2">Location</th>
-              <th class="px-3 py-2">Listings</th>
-              <th class="px-3 py-2">Avg Price</th>
-              <th class="px-3 py-2">Avg Views</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Saves</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for listing in most_saved_listings %}
+              <tr>
+                <td>{{ listing.title }}</td>
+                <td>{{ listing.author.username }}</td>
+                <td>{{ listing.saved_count }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3">No saved listings yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="section-title">
+        <div>
+          <h2>Demand by Location</h2>
+          <p>Listing concentration and average outcomes by area.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Listings</th>
+              <th>Avg Price</th>
+              <th>Avg Views</th>
             </tr>
           </thead>
           <tbody>
             {% for row in location_demand %}
-              <tr class="border-b border-slate-100">
-                <td class="px-3 py-2 font-medium">{{ row.location }}</td>
-                <td class="px-3 py-2">{{ row.listing_count }}</td>
-                <td class="px-3 py-2">HKD {{ row.avg_price|floatformat:0 }}</td>
-                <td class="px-3 py-2">{{ row.avg_views|floatformat:1 }}</td>
+              <tr>
+                <td>{{ row.location }}</td>
+                <td>{{ row.listing_count }}</td>
+                <td>HKD {{ row.avg_price|floatformat:0 }}</td>
+                <td>{{ row.avg_views|floatformat:1 }}</td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="4" class="px-3 py-4 text-slate-500">No listing demand data yet.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </article>
-
-    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 class="text-lg font-semibold">Weekly Activity (Last 8 Weeks)</h2>
-      <div class="mt-4 overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="border-b border-slate-200 text-left text-slate-500">
-            <tr>
-              <th class="px-3 py-2">Week Start</th>
-              <th class="px-3 py-2">Posts</th>
-              <th class="px-3 py-2">Comments</th>
-              <th class="px-3 py-2">Likes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in weekly_activity %}
-              <tr class="border-b border-slate-100">
-                <td class="px-3 py-2 font-medium">{{ row.week_start|date:"Y-m-d" }}</td>
-                <td class="px-3 py-2">{{ row.posts }}</td>
-                <td class="px-3 py-2">{{ row.comments }}</td>
-                <td class="px-3 py-2">{{ row.likes }}</td>
+                <td colspan="4">No listing demand data yet.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -172,53 +164,31 @@
     </article>
   </section>
 
-  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-    <h2 class="text-lg font-semibold">All Users</h2>
-    <div class="mt-4 overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="border-b border-slate-200 text-left text-slate-500">
+  <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>Weekly Activity (Last 8 Weeks)</h2>
+        <p>Posting, commenting, and likes grouped by week start date.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
           <tr>
-            <th class="px-3 py-2">Username</th>
-            <th class="px-3 py-2">Email</th>
-            <th class="px-3 py-2">Joined</th>
-            <th class="px-3 py-2">Status</th>
-            <th class="px-3 py-2">Action</th>
+            <th>Week Start</th>
+            <th>Posts</th>
+            <th>Comments</th>
+            <th>Likes</th>
           </tr>
         </thead>
         <tbody>
-          {% for user in users %}
-            <tr class="border-b border-slate-100 align-top">
-              <td class="px-3 py-3 font-medium">{{ user.username }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ user.email }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ user.date_joined|date:"Y-m-d H:i" }}</td>
-              <td class="px-3 py-3">
-                {% if user.is_suspended %}
-                  <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">Suspended</span>
-                {% else %}
-                  <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Active</span>
-                {% endif %}
-              </td>
-              <td class="px-3 py-3">
-                {% if user.is_suspended %}
-                  <form method="post" action="{% url 'core:reactivate_user' user.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
-                      Reactivate
-                    </button>
-                  </form>
-                {% else %}
-                  <form method="post" action="{% url 'core:suspend_user' user.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="rounded-lg bg-amber-600 px-3 py-2 text-white hover:bg-amber-700">
-                      Suspend
-                    </button>
-                  </form>
-                {% endif %}
-              </td>
-            </tr>
-          {% empty %}
+          {% for row in weekly_activity %}
             <tr>
-              <td colspan="5" class="px-3 py-4 text-slate-500">No users found.</td>
+              <td>{{ row.week_start|date:"Y-m-d" }}</td>
+              <td>{{ row.posts }}</td>
+              <td>{{ row.comments }}</td>
+              <td>{{ row.likes }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -226,64 +196,120 @@
     </div>
   </section>
 
-  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-    <h2 class="text-lg font-semibold">All Listings</h2>
-    <div class="mt-4 overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="border-b border-slate-200 text-left text-slate-500">
+  <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>User Moderation</h2>
+        <p>Suspend or reactivate accounts based on policy checks.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
           <tr>
-            <th class="px-3 py-2">Title</th>
-            <th class="px-3 py-2">Author</th>
-            <th class="px-3 py-2">Type</th>
-            <th class="px-3 py-2">Price</th>
-            <th class="px-3 py-2">Status</th>
-            <th class="px-3 py-2">Actions</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Joined</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+              <td>
+                {% if user.is_suspended %}
+                  <span class="badge suspended">Suspended</span>
+                {% else %}
+                  <span class="badge active">Active</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.is_suspended %}
+                  <form method="post" action="{% url 'core:reactivate_user' user.id %}" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Reactivate</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'core:suspend_user' user.id %}" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Suspend</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5">No users found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>Listing Moderation</h2>
+        <p>Control listing visibility and remove harmful content.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table table-wide">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for listing in listings %}
-            <tr class="border-b border-slate-100 align-top">
-              <td class="px-3 py-3 font-medium">{{ listing.title }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ listing.author.username }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ listing.listing_type }}</td>
-              <td class="px-3 py-3 text-slate-600">${{ listing.price }}</td>
-              <td class="px-3 py-3">
+            <tr>
+              <td>{{ listing.title }}</td>
+              <td>{{ listing.author.username }}</td>
+              <td>{{ listing.get_listing_type_display }}</td>
+              <td>HKD {{ listing.price|floatformat:0 }}</td>
+              <td>
                 {% if listing.is_hidden %}
-                  <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">Hidden</span>
+                  <span class="badge hidden">Hidden</span>
                 {% else %}
-                  <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Visible</span>
+                  <span class="badge active">Visible</span>
                 {% endif %}
               </td>
-              <td class="px-3 py-3">
-                <div class="flex flex-wrap gap-2">
+              <td>
+                <div class="inline-actions">
                   {% if listing.is_hidden %}
-                    <form method="post" action="{% url 'core:reactivate_listing' listing.id %}">
+                    <form method="post" action="{% url 'core:reactivate_listing' listing.id %}" class="inline-form">
                       {% csrf_token %}
-                      <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
-                        Reactivate
-                      </button>
+                      <button type="submit" class="btn btn-success">Reactivate</button>
                     </form>
                   {% else %}
-                    <form method="post" action="{% url 'core:hide_listing' listing.id %}">
+                    <form method="post" action="{% url 'core:hide_listing' listing.id %}" class="inline-form">
                       {% csrf_token %}
-                      <button type="submit" class="rounded-lg bg-amber-600 px-3 py-2 text-white hover:bg-amber-700">
-                        Hide
-                      </button>
+                      <button type="submit" class="btn btn-warning">Hide</button>
                     </form>
                   {% endif %}
 
-                  <form method="post" action="{% url 'core:delete_listing' listing.id %}">
+                  <form method="post" action="{% url 'core:delete_listing' listing.id %}" class="inline-form">
                     {% csrf_token %}
-                    <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
-                      Delete
-                    </button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
                   </form>
                 </div>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="6" class="px-3 py-4 text-slate-500">No listings found.</td>
+              <td colspan="6">No listings found.</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -291,38 +317,42 @@
     </div>
   </section>
 
-  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-    <h2 class="text-lg font-semibold">All Comments</h2>
-    <div class="mt-4 overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="border-b border-slate-200 text-left text-slate-500">
+  <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>Comment Moderation</h2>
+        <p>Review recent comments and remove inappropriate content.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table table-xwide">
+        <thead>
           <tr>
-            <th class="px-3 py-2">Author</th>
-            <th class="px-3 py-2">Listing</th>
-            <th class="px-3 py-2">Comment</th>
-            <th class="px-3 py-2">Created</th>
-            <th class="px-3 py-2">Action</th>
+            <th>Author</th>
+            <th>Listing</th>
+            <th>Comment</th>
+            <th>Created</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {% for comment in comments %}
-            <tr class="border-b border-slate-100 align-top">
-              <td class="px-3 py-3 font-medium">{{ comment.author.username }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ comment.post.title }}</td>
-              <td class="px-3 py-3 text-slate-700">{{ comment.content }}</td>
-              <td class="px-3 py-3 text-slate-600">{{ comment.created_at|date:"Y-m-d H:i" }}</td>
-              <td class="px-3 py-3">
-                <form method="post" action="{% url 'core:dashboard_delete_comment' comment.id %}">
+            <tr>
+              <td>{{ comment.author.username }}</td>
+              <td>{{ comment.post.title }}</td>
+              <td>{{ comment.content }}</td>
+              <td>{{ comment.created_at|date:"Y-m-d H:i" }}</td>
+              <td>
+                <form method="post" action="{% url 'core:dashboard_delete_comment' comment.id %}" class="inline-form">
                   {% csrf_token %}
-                  <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
-                    Delete
-                  </button>
+                  <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="5" class="px-3 py-4 text-slate-500">No comments found.</td>
+              <td colspan="5">No comments found.</td>
             </tr>
           {% endfor %}
         </tbody>

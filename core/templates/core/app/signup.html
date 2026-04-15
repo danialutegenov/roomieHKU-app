@@ -1,32 +1,50 @@
 {% extends 'core/app/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-md px-6 py-10">
-  <h1 class="text-2xl font-bold">Create Account</h1>
-  <form method="post" class="mt-6 space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.username.label }}</label>
-      {{ form.username }}
-      {{ form.username.errors }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.email.label }}</label>
-      {{ form.email }}
-      {{ form.email.errors }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.password1.label }}</label>
-      {{ form.password1 }}
-      {{ form.password1.errors }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.password2.label }}</label>
-      {{ form.password2 }}
-      {{ form.password2.errors }}
-    </div>
-    <button type="submit" class="w-full rounded bg-slate-900 px-4 py-2 text-white">Sign Up</button>
-  </form>
+<main class="auth-shell">
+  <section class="auth-card">
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-subtitle">Join RoomieHKU to post listings, save favorites, and comment.</p>
+
+    <form method="post" class="field-grid mt-4">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+
+      <div class="field-grid compact">
+        <div class="field">
+          <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+          {{ form.password1 }}
+          {{ form.password1.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+          {{ form.password2 }}
+          {{ form.password2.errors }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+    </form>
+
+    <p class="mt-4 text-sm text-secondary">
+      Already have an account?
+      <a href="{% url 'core:login' %}" class="muted-link">Log In</a>
+    </p>
+  </section>
 </main>
 {% endblock %}
