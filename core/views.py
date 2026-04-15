@@ -31,6 +31,12 @@ def app_home(request):
     return redirect("core:listing_list")
 
 
+def _apply_post_sort(queryset, sort_by):
+    if sort_by == "popular":
+        return queryset.order_by("-likes_count", "-views_count", "-created_at")
+    return queryset.order_by("-created_at")
+
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect("core:listing_list")
@@ -50,9 +56,11 @@ def signup(request):
 def listing_list(request):
     queryset = Post.objects.select_related("author").filter(is_hidden=False)
     filter_form = ListingFilterForm(request.GET or None)
+    sort_by = "newest"
 
     if filter_form.is_valid():
         data = filter_form.cleaned_data
+        sort_by = data.get("sort_by") or "newest"
         keyword = data.get("q")
         listing_type = data.get("listing_type")
         location = data.get("location")
@@ -75,6 +83,8 @@ def listing_list(request):
         if max_price is not None:
             queryset = queryset.filter(price__lte=max_price)
 
+    queryset = _apply_post_sort(queryset, sort_by)
+
     market_snapshot = queryset.aggregate(
         total_results=Count("id"),
         avg_price=Avg("price"),
@@ -89,6 +99,25 @@ def listing_list(request):
             "filter_form": filter_form,
             "posts": queryset,
             "market_snapshot": market_snapshot,
+        },
+    )
+
+
+@login_required
+def user_post_history(request):
+    sort_by = request.GET.get("sort_by", "newest")
+    if sort_by not in {"newest", "popular"}:
+        sort_by = "newest"
+
+    queryset = Post.objects.select_related("author").filter(author=request.user)
+    posts = _apply_post_sort(queryset, sort_by)
+
+    return render(
+        request,
+        "core/app/user_post_history.html",
+        {
+            "posts": posts,
+            "sort_by": sort_by,
         },
     )
 

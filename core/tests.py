@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Comment, Like, Post, SavedListing, User
 
@@ -142,6 +143,13 @@ class ListingAndPermissionTests(TestCase):
         self.post.refresh_from_db()
         self.assertEqual(self.post.views_count, 1)
 
+    def test_feed_card_shows_author_image_and_timestamp(self):
+        response = self.client.get(reverse("core:listing_list"))
+        self.assertContains(response, self.author.username)
+        self.assertContains(response, self.post.image_url.url)
+        rendered_timestamp = timezone.localtime(self.post.created_at).strftime("%Y-%m-%d %H:%M")
+        self.assertContains(response, rendered_timestamp)
+
     def test_anonymous_user_redirected_for_protected_routes(self):
         protected_routes = [
             reverse("core:listing_create"),
@@ -170,6 +178,45 @@ class ListingAndPermissionTests(TestCase):
         response = self.client.post(reverse("core:delete_comment", args=[comment.pk]))
         self.assertEqual(response.status_code, 403)
         self.assertTrue(Comment.objects.filter(pk=comment.pk).exists())
+
+    def test_user_post_history_requires_login_and_scopes_to_current_user(self):
+        anonymous_response = self.client.get(reverse("core:user_post_history"))
+        self.assertEqual(anonymous_response.status_code, 302)
+        self.assertTrue(anonymous_response.url.startswith(reverse("core:login")))
+
+        other_post = Post.objects.create(
+            author=self.other_user,
+            title="Other User Post",
+            description="Should not appear in author history",
+            image_url=make_uploaded_image("history-other.gif"),
+            listing_type="Dorm",
+            location="Sai Ying Pun",
+            price="6200.00",
+        )
+
+        self.client.login(username="author1", password="password123")
+        history_response = self.client.get(reverse("core:user_post_history"))
+        self.assertEqual(history_response.status_code, 200)
+        post_ids = set(history_response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(post_ids, {self.post.id})
+        self.assertNotIn(other_post.id, post_ids)
+
+    def test_user_post_history_sort_by_popularity(self):
+        second_post = Post.objects.create(
+            author=self.author,
+            title="Second Author Post",
+            description="Second post for popularity sorting",
+            image_url=make_uploaded_image("history-second.gif"),
+            listing_type="Apartment",
+            location="Kennedy Town",
+            price="9800.00",
+        )
+        Like.objects.create(user=self.other_user, post=second_post)
+
+        self.client.login(username="author1", password="password123")
+        response = self.client.get(reverse("core:user_post_history"), {"sort_by": "popular"})
+        ordered_ids = list(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(ordered_ids[0], second_post.id)
 
 
 class ListingFilterTests(TestCase):
@@ -232,6 +279,18 @@ class ListingFilterTests(TestCase):
         self.assertEqual(snapshot["min_price"], Decimal("5500"))
         self.assertEqual(snapshot["max_price"], Decimal("7000"))
         self.assertEqual(snapshot["avg_price"], Decimal("6250"))
+
+    def test_sort_by_popularity_orders_feed(self):
+        user_1 = User.objects.create_user(username="fan1", password="password123", email="fan1@example.com")
+        user_2 = User.objects.create_user(username="fan2", password="password123", email="fan2@example.com")
+
+        Like.objects.create(user=user_1, post=self.post_3)
+        Like.objects.create(user=user_2, post=self.post_3)
+        Like.objects.create(user=user_1, post=self.post_1)
+
+        response = self.client.get(reverse("core:listing_list"), {"sort_by": "popular"})
+        ordered_ids = list(response.context["posts"].values_list("id", flat=True))
+        self.assertEqual(ordered_ids[0], self.post_3.id)
 
 
 class PostCrudTests(TestCase):
