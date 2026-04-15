@@ -82,7 +82,7 @@ class Command(BaseCommand):
                 "phone_number": "",
                 "profile_photo_name": "staff_demo.gif",
                 "is_staff": True,
-                "is_superuser": True,
+                "is_superuser": False,
             },
         ]
 
