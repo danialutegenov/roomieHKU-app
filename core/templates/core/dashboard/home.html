@@ -236,7 +236,7 @@
               <td class="px-3 py-3 text-slate-700">{{ comment.content }}</td>
               <td class="px-3 py-3 text-slate-600">{{ comment.created_at|date:"Y-m-d H:i" }}</td>
               <td class="px-3 py-3">
-                <form method="post" action="{% url 'core:delete_comment' comment.id %}">
+                <form method="post" action="{% url 'core:dashboard_delete_comment' comment.id %}">
                   {% csrf_token %}
                   <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
                     Delete
