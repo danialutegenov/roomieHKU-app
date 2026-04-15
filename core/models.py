@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.core.validators import MinValueValidator
 
 
@@ -19,7 +20,16 @@ class User(AbstractUser):
 
     # User profile details
     bio = models.TextField(blank=True)
-    profile_photo = models.URLField(max_length=500, null=True, blank=True)
+    profile_photo = models.FileField(
+        upload_to="profile_photos/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
+    )
+    
+    # Admin moderation
+    is_suspended = models.BooleanField(default=False)
+    suspended_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.username
@@ -46,7 +56,11 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image_url = models.URLField(max_length=500, help_text="Core: Visual representation")
+    image_url = models.FileField(
+        upload_to="listing_images/",
+        help_text="Upload listing image",
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
+    )
 
     # RoomieHKU Business Logic
     listing_type = models.CharField(max_length=20, choices=LISTING_TYPE_CHOICES)
@@ -71,6 +85,8 @@ class Post(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
 
     # Core Feature: Timestamp
+    is_hidden = models.BooleanField(default=False)
+    hidden_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,7 +102,6 @@ class Post(models.Model):
                 name='post_price_gte_0'
             ),
         ]
-
     def __str__(self):
         return f"{self.listing_type}: {self.title}"
 
@@ -122,16 +137,11 @@ class Like(models.Model):
 
 
 class SavedListing(models.Model):
-    """
-    Maps to the SAVED_LISTING table in the ER diagram.
-    Allows users to bookmark listings.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="saved_items")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="saved_by")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Prevents duplicate saves
         constraints = [
-            models.UniqueConstraint(fields=['user', 'post'], name='unique_savedlisting_user_post'),
+            models.UniqueConstraint(fields=["user", "post"], name="unique_savedlisting_user_post"),
         ]

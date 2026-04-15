@@ -1,23 +1,257 @@
 {% extends 'core/dashboard/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-4xl px-6 py-12">
-  <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-  <p class="mt-2 text-slate-600">Internal frontend for moderation and platform oversight.</p>
+<main class="mx-auto max-w-7xl px-6 py-12">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+      <p class="mt-2 text-slate-600">Internal frontend for moderation and platform oversight.</p>
+    </div>
+  </div>
 
-  <section class="mt-8 grid gap-4 md:grid-cols-3">
+  {% if messages %}
+    <section class="mt-6 space-y-3">
+      {% for message in messages %}
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <section class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Pending listings</p>
-      <p class="mt-2 text-2xl font-semibold">--</p>
+      <p class="text-sm text-slate-500">Total users</p>
+      <p class="mt-2 text-2xl font-semibold">{{ total_users }}</p>
     </article>
+
     <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Reported comments</p>
-      <p class="mt-2 text-2xl font-semibold">--</p>
+      <p class="text-sm text-slate-500">Total listings</p>
+      <p class="mt-2 text-2xl font-semibold">{{ total_listings }}</p>
     </article>
+
     <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm text-slate-500">Active users</p>
-      <p class="mt-2 text-2xl font-semibold">--</p>
+      <p class="text-sm text-slate-500">Total comments</p>
+      <p class="mt-2 text-2xl font-semibold">{{ total_comments }}</p>
     </article>
+  </section>
+
+  <section class="mt-8 grid gap-6 xl:grid-cols-2">
+    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Most Saved Listings</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b border-slate-200 text-left text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Title</th>
+              <th class="px-3 py-2">Author</th>
+              <th class="px-3 py-2">Saves</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for listing in most_saved_listings %}
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-2 font-medium">{{ listing.title }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ listing.author.username }}</td>
+                <td class="px-3 py-2">{{ listing.saved_count }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="px-3 py-4 text-slate-500">No saved listings yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Most Active Users</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b border-slate-200 text-left text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Username</th>
+              <th class="px-3 py-2">Posts</th>
+              <th class="px-3 py-2">Comments</th>
+              <th class="px-3 py-2">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in most_active_users %}
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-2 font-medium">{{ user.username }}</td>
+                <td class="px-3 py-2">{{ user.post_count }}</td>
+                <td class="px-3 py-2">{{ user.comment_count }}</td>
+                <td class="px-3 py-2">{{ user.total_activity }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="px-3 py-4 text-slate-500">No activity yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <h2 class="text-lg font-semibold">All Users</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="border-b border-slate-200 text-left text-slate-500">
+          <tr>
+            <th class="px-3 py-2">Username</th>
+            <th class="px-3 py-2">Email</th>
+            <th class="px-3 py-2">Joined</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr class="border-b border-slate-100 align-top">
+              <td class="px-3 py-3 font-medium">{{ user.username }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ user.email }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+              <td class="px-3 py-3">
+                {% if user.is_suspended %}
+                  <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">Suspended</span>
+                {% else %}
+                  <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Active</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                {% if user.is_suspended %}
+                  <form method="post" action="{% url 'core:reactivate_user' user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
+                      Reactivate
+                    </button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'core:suspend_user' user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="rounded-lg bg-amber-600 px-3 py-2 text-white hover:bg-amber-700">
+                      Suspend
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="px-3 py-4 text-slate-500">No users found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <h2 class="text-lg font-semibold">All Listings</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="border-b border-slate-200 text-left text-slate-500">
+          <tr>
+            <th class="px-3 py-2">Title</th>
+            <th class="px-3 py-2">Author</th>
+            <th class="px-3 py-2">Type</th>
+            <th class="px-3 py-2">Price</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for listing in listings %}
+            <tr class="border-b border-slate-100 align-top">
+              <td class="px-3 py-3 font-medium">{{ listing.title }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ listing.author.username }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ listing.listing_type }}</td>
+              <td class="px-3 py-3 text-slate-600">${{ listing.price }}</td>
+              <td class="px-3 py-3">
+                {% if listing.is_hidden %}
+                  <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">Hidden</span>
+                {% else %}
+                  <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Visible</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                <div class="flex flex-wrap gap-2">
+                  {% if listing.is_hidden %}
+                    <form method="post" action="{% url 'core:reactivate_listing' listing.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
+                        Reactivate
+                      </button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{% url 'core:hide_listing' listing.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="rounded-lg bg-amber-600 px-3 py-2 text-white hover:bg-amber-700">
+                        Hide
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  <form method="post" action="{% url 'core:delete_listing' listing.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="px-3 py-4 text-slate-500">No listings found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <h2 class="text-lg font-semibold">All Comments</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="border-b border-slate-200 text-left text-slate-500">
+          <tr>
+            <th class="px-3 py-2">Author</th>
+            <th class="px-3 py-2">Listing</th>
+            <th class="px-3 py-2">Comment</th>
+            <th class="px-3 py-2">Created</th>
+            <th class="px-3 py-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comment in comments %}
+            <tr class="border-b border-slate-100 align-top">
+              <td class="px-3 py-3 font-medium">{{ comment.author.username }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ comment.post.title }}</td>
+              <td class="px-3 py-3 text-slate-700">{{ comment.content }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ comment.created_at|date:"Y-m-d H:i" }}</td>
+              <td class="px-3 py-3">
+                <form method="post" action="{% url 'core:delete_comment' comment.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700">
+                    Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="px-3 py-4 text-slate-500">No comments found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
 </main>
 {% endblock %}
