@@ -1,10 +1,13 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
-from django.db.models import Count, F, Q
+from django.db.models import Avg, Count, F, Max, Min, Q, Sum
+from django.db.models.functions import TruncWeek
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -28,6 +31,12 @@ def app_home(request):
     return redirect("core:listing_list")
 
 
+def _apply_post_sort(queryset, sort_by):
+    if sort_by == "popular":
+        return queryset.order_by("-likes_count", "-views_count", "-created_at")
+    return queryset.order_by("-created_at")
+
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect("core:listing_list")
@@ -47,9 +56,11 @@ def signup(request):
 def listing_list(request):
     queryset = Post.objects.select_related("author").filter(is_hidden=False)
     filter_form = ListingFilterForm(request.GET or None)
+    sort_by = "newest"
 
     if filter_form.is_valid():
         data = filter_form.cleaned_data
+        sort_by = data.get("sort_by") or "newest"
         keyword = data.get("q")
         listing_type = data.get("listing_type")
         location = data.get("location")
@@ -72,12 +83,41 @@ def listing_list(request):
         if max_price is not None:
             queryset = queryset.filter(price__lte=max_price)
 
+    queryset = _apply_post_sort(queryset, sort_by)
+
+    market_snapshot = queryset.aggregate(
+        total_results=Count("id"),
+        avg_price=Avg("price"),
+        min_price=Min("price"),
+        max_price=Max("price"),
+    )
+
     return render(
         request,
         "core/app/listing_list.html",
         {
             "filter_form": filter_form,
             "posts": queryset,
+            "market_snapshot": market_snapshot,
+        },
+    )
+
+
+@login_required
+def user_post_history(request):
+    sort_by = request.GET.get("sort_by", "newest")
+    if sort_by not in {"newest", "popular"}:
+        sort_by = "newest"
+
+    queryset = Post.objects.select_related("author").filter(author=request.user)
+    posts = _apply_post_sort(queryset, sort_by)
+
+    return render(
+        request,
+        "core/app/user_post_history.html",
+        {
+            "posts": posts,
+            "sort_by": sort_by,
         },
     )
 
@@ -90,6 +130,10 @@ def listing_detail(request, pk):
         and (request.user.is_staff or request.user.pk == post.author_id)
     ):
         return HttpResponseForbidden("This listing is hidden.")
+
+    # Track listing page views in the database for lightweight analytics.
+    Post.objects.filter(pk=post.pk).update(views_count=F("views_count") + 1)
+    post.refresh_from_db(fields=["views_count"])
 
     comments = post.comments.select_related("author").all()
     comment_form = CommentCreateForm()
@@ -273,6 +317,7 @@ def dashboard_home(request):
     total_users = User.objects.count()
     total_listings = Post.objects.count()
     total_comments = Comment.objects.count()
+    total_views = Post.objects.aggregate(total=Sum("views_count"))["total"] or 0
 
     users = User.objects.all().order_by("-date_joined")
     listings = Post.objects.select_related("author").all().order_by("-created_at")
@@ -283,6 +328,22 @@ def dashboard_home(request):
         .select_related("author")
         .order_by("-saved_count", "-created_at")[:10]
     )
+    top_viewed_listing = (
+        Post.objects.select_related("author")
+        .order_by("-views_count", "-created_at")
+        .first()
+    )
+    location_demand = (
+        Post.objects.filter(is_hidden=False)
+        .values("location")
+        .annotate(
+            listing_count=Count("id"),
+            avg_price=Avg("price"),
+            avg_views=Avg("views_count"),
+        )
+        .order_by("-listing_count", "location")
+    )
+    weekly_activity = _build_weekly_activity()
 
     most_active_users = (
         User.objects.annotate(
@@ -297,11 +358,15 @@ def dashboard_home(request):
         "total_users": total_users,
         "total_listings": total_listings,
         "total_comments": total_comments,
+        "total_views": total_views,
         "users": users,
         "listings": listings,
         "comments": comments,
         "most_saved_listings": most_saved_listings,
+        "top_viewed_listing": top_viewed_listing,
         "most_active_users": most_active_users,
+        "location_demand": location_demand,
+        "weekly_activity": weekly_activity,
         # Keep backwards-compatible keys used by existing tests.
         "stats": {
             "users_count": total_users,
@@ -314,6 +379,51 @@ def dashboard_home(request):
         "recent_comments": comments[:5],
     }
     return render(request, "core/dashboard/home.html", context)
+
+
+def _build_weekly_activity():
+    today = timezone.localdate()
+    current_week_start = today - timedelta(days=today.weekday())
+    week_starts = [current_week_start - timedelta(weeks=offset) for offset in range(7, -1, -1)]
+    window_start = week_starts[0]
+
+    posts_by_week = {
+        row["week"].date(): row["total"]
+        for row in (
+            Post.objects.filter(created_at__date__gte=window_start)
+            .annotate(week=TruncWeek("created_at"))
+            .values("week")
+            .annotate(total=Count("id"))
+        )
+    }
+    comments_by_week = {
+        row["week"].date(): row["total"]
+        for row in (
+            Comment.objects.filter(created_at__date__gte=window_start)
+            .annotate(week=TruncWeek("created_at"))
+            .values("week")
+            .annotate(total=Count("id"))
+        )
+    }
+    likes_by_week = {
+        row["week"].date(): row["total"]
+        for row in (
+            Like.objects.filter(created_at__date__gte=window_start)
+            .annotate(week=TruncWeek("created_at"))
+            .values("week")
+            .annotate(total=Count("id"))
+        )
+    }
+
+    return [
+        {
+            "week_start": week_start,
+            "posts": posts_by_week.get(week_start, 0),
+            "comments": comments_by_week.get(week_start, 0),
+            "likes": likes_by_week.get(week_start, 0),
+        }
+        for week_start in week_starts
+    ]
 
 
 @staff_member_required

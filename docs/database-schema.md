@@ -43,6 +43,7 @@ erDiagram
         string gender_preference "M / F / N"
         text lifestyle_notes "For roommate matching"
         int likes_count "Denormalized for popularity sorting"
+        int views_count "Denormalized listing page-view counter"
         bool is_hidden "Staff moderation visibility flag"
         datetime hidden_at "When listing was hidden"
         datetime created_at "Timestamp"
@@ -91,6 +92,7 @@ erDiagram
     *   **is_hidden / hidden_at**: Staff moderation fields used to temporarily hide a listing without deleting the row.
 *   **Optimization**:
     *   **likes_count**: A denormalized field updated via signals or views to allow instant "Sort by Popularity" without expensive SQL `COUNT` aggregations.
+    *   **views_count**: A denormalized field incremented on listing-detail requests to support lightweight view-based analytics.
     *   **ordering**: Defaulted to `-created_at` to prioritize the freshest content in the feed.
 
 ### C. Social & Interaction Models
@@ -106,6 +108,7 @@ erDiagram
 
 The schema is pre-configured to support platform analytics:
 *   **Popularity Trends**: High-speed querying of trending content via the `likes_count` field.
+*   **Exposure Trends**: Listing attention can be analyzed through `views_count` and grouped by location/time windows.
 *   **User Engagement**: Measuring platform activity by grouping `Comment` and `Post` counts by `author_id`.
 *   **Geographic Insights**: Identifying high-demand areas by aggregating listings by the `location` field.
 *   **User Preference**: By cross-referencing `Likes` and `SavedListings` with `Post` attributes (such as `location`,

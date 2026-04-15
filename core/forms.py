@@ -44,6 +44,11 @@ class ProfileForm(forms.ModelForm):
 
 
 class ListingFilterForm(forms.Form):
+    SORT_CHOICES = [
+        ("newest", "Newest"),
+        ("popular", "Most Popular"),
+    ]
+
     q = forms.CharField(required=False, label="Keyword")
     listing_type = forms.ChoiceField(
         required=False,
@@ -52,6 +57,7 @@ class ListingFilterForm(forms.Form):
     location = forms.CharField(required=False)
     min_price = forms.DecimalField(required=False, min_value=0)
     max_price = forms.DecimalField(required=False, min_value=0)
+    sort_by = forms.ChoiceField(required=False, choices=SORT_CHOICES, initial="newest")
 
     def clean(self):
         cleaned_data = super().clean()

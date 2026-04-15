@@ -64,18 +64,22 @@ The project does not require a separate REST API. Most interactions will be hand
 - profile creation and editing
 - display of user information
 - connection between a user and their listings, comments, and saved items
+- user-specific post history page (`/app/my-posts/`) with server-side sorting support
 
 ### Listings
 
 - creation, editing, and deletion of listings
 - support for multiple listing types
 - public browsing of visible listings
+- feed cards display author username, image preview, text description, and post timestamp
 
 ### Search and Filtering
 
 - keyword-based search
 - filtering by listing attributes such as type, location, or rent
 - sorting and feed presentation
+- sorting switch supports newest-first and popularity-first ordering
+- lightweight market snapshot metrics on filtered listing results (count and price range/average)
 
 ### Saved Listings
 
@@ -92,6 +96,7 @@ The project does not require a separate REST API. Most interactions will be hand
 - moderation of users, listings, and comments
 - access to simple platform statistics
 - moderation actions include user suspend/reactivate, listing hide/reactivate/delete, and comment deletion
+- analytics views for location demand, weekly activity trends, and top-viewed listings
 
 ### Database Management
 

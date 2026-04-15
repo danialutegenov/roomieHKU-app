@@ -83,6 +83,7 @@ class Post(models.Model):
 
     # Optimization: Denormalized for popularity sorting
     likes_count = models.PositiveIntegerField(default=0)
+    views_count = models.PositiveIntegerField(default=0)
 
     # Core Feature: Timestamp
     is_hidden = models.BooleanField(default=False)
