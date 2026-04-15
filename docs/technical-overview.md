@@ -91,6 +91,7 @@ The project does not require a separate REST API. Most interactions will be hand
 
 - moderation of users, listings, and comments
 - access to simple platform statistics
+- moderation actions include user suspend/reactivate, listing hide/reactivate/delete, and comment deletion
 
 ### Database Management
 

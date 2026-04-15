@@ -26,6 +26,8 @@ erDiagram
         string phone_number "Contact Phone (Optional)"
         text bio "User Introduction"
         string profile_photo "Uploaded image path"
+        bool is_suspended "Staff moderation flag"
+        datetime suspended_at "When suspension was applied"
     }
 
     POST {
@@ -41,6 +43,8 @@ erDiagram
         string gender_preference "M / F / N"
         text lifestyle_notes "For roommate matching"
         int likes_count "Denormalized for popularity sorting"
+        bool is_hidden "Staff moderation visibility flag"
+        datetime hidden_at "When listing was hidden"
         datetime created_at "Timestamp"
         datetime updated_at
     }
@@ -76,6 +80,7 @@ erDiagram
     *   **username**: Unique identifier for authentication (built-in).
     *   **phone_number**: Stores contact details for interested parties (formatted as `CharField` to support international prefixes and leading zeros).
     *   **profile_photo**: Implemented as an uploaded media file field (`profile_photos/`).
+    *   **is_suspended / suspended_at**: Staff moderation fields used to track user suspension state and suspension time.
 
 ### B. Post Model (Listing Engine)
 *   **Function**: A unified model handling "Housing Offers" and "Roommate Requests."
@@ -83,6 +88,7 @@ erDiagram
     *   **listing_type**: Categorizes posts into Apartment, Dorm, or Roommate Request.
     *   **price**: Stored as `DecimalField` to ensure financial precision for rents/budgets.
     *   **gender_preference & lifestyle_notes**: Critical fields for roommate compatibility matching.
+    *   **is_hidden / hidden_at**: Staff moderation fields used to temporarily hide a listing without deleting the row.
 *   **Optimization**:
     *   **likes_count**: A denormalized field updated via signals or views to allow instant "Sort by Popularity" without expensive SQL `COUNT` aggregations.
     *   **ordering**: Defaulted to `-created_at` to prioritize the freshest content in the feed.

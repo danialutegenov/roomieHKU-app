@@ -359,7 +359,7 @@ class ProfileAndDashboardTests(TestCase):
             location="Pok Fu Lam",
             price="7000.00",
         )
-        Comment.objects.create(post=self.post, author=self.user, content="Sample comment")
+        self.comment = Comment.objects.create(post=self.post, author=self.user, content="Sample comment")
         Like.objects.create(user=self.staff_user, post=self.post)
         SavedListing.objects.create(user=self.staff_user, post=self.post)
 
@@ -396,3 +396,71 @@ class ProfileAndDashboardTests(TestCase):
         self.assertIn("stats", staff_response.context)
         self.assertIn("recent_posts", staff_response.context)
         self.assertIn("recent_comments", staff_response.context)
+
+    def test_staff_moderation_actions(self):
+        self.client.login(username="staffuser", password="password123")
+
+        suspend_response = self.client.post(reverse("core:suspend_user", args=[self.user.pk]))
+        self.assertRedirects(suspend_response, reverse("core:dashboard_home"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_suspended)
+        self.assertIsNotNone(self.user.suspended_at)
+
+        reactivate_user_response = self.client.post(reverse("core:reactivate_user", args=[self.user.pk]))
+        self.assertRedirects(reactivate_user_response, reverse("core:dashboard_home"))
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_suspended)
+        self.assertIsNone(self.user.suspended_at)
+
+        hide_response = self.client.post(reverse("core:hide_listing", args=[self.post.pk]))
+        self.assertRedirects(hide_response, reverse("core:dashboard_home"))
+        self.post.refresh_from_db()
+        self.assertTrue(self.post.is_hidden)
+        self.assertIsNotNone(self.post.hidden_at)
+
+        reactivate_listing_response = self.client.post(reverse("core:reactivate_listing", args=[self.post.pk]))
+        self.assertRedirects(reactivate_listing_response, reverse("core:dashboard_home"))
+        self.post.refresh_from_db()
+        self.assertFalse(self.post.is_hidden)
+        self.assertIsNone(self.post.hidden_at)
+
+        delete_comment_response = self.client.post(
+            reverse("core:dashboard_delete_comment", args=[self.comment.pk])
+        )
+        self.assertRedirects(delete_comment_response, reverse("core:dashboard_home"))
+        self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
+
+        delete_post = Post.objects.create(
+            author=self.user,
+            title="Dashboard Delete Post",
+            description="To be deleted by staff",
+            image_url=make_uploaded_image("dashboard-delete.gif"),
+            listing_type="Dorm",
+            location="Kennedy Town",
+            price="5000.00",
+        )
+        delete_listing_response = self.client.post(reverse("core:delete_listing", args=[delete_post.pk]))
+        self.assertRedirects(delete_listing_response, reverse("core:dashboard_home"))
+        self.assertFalse(Post.objects.filter(pk=delete_post.pk).exists())
+
+    def test_dashboard_moderation_requires_staff(self):
+        self.client.login(username="normaluser", password="password123")
+        moderation_routes = [
+            reverse("core:suspend_user", args=[self.user.pk]),
+            reverse("core:reactivate_user", args=[self.user.pk]),
+            reverse("core:hide_listing", args=[self.post.pk]),
+            reverse("core:reactivate_listing", args=[self.post.pk]),
+            reverse("core:delete_listing", args=[self.post.pk]),
+            reverse("core:dashboard_delete_comment", args=[self.comment.pk]),
+        ]
+
+        for route in moderation_routes:
+            response = self.client.post(route)
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(response.url.startswith(reverse("admin:login")))
+
+        self.user.refresh_from_db()
+        self.post.refresh_from_db()
+        self.assertFalse(self.user.is_suspended)
+        self.assertFalse(self.post.is_hidden)
+        self.assertTrue(Comment.objects.filter(pk=self.comment.pk).exists())
