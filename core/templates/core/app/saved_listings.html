@@ -46,7 +46,18 @@
               <h3 class="listing-title">
                 <a href="{% url 'core:listing_detail' post.pk %}">{{ post.title }}</a>
               </h3>
-              <p class="listing-byline">By {{ post.author.username }} • {{ post.created_at|date:"Y-m-d H:i" }}</p>
+              <div class="author-chip">
+                {% if post.author.profile_photo %}
+                  <img
+                    src="{{ post.author.profile_photo.url }}"
+                    alt="{{ post.author.username }} profile photo"
+                    class="author-avatar"
+                  />
+                {% else %}
+                  <span class="author-avatar avatar-fallback">{{ post.author.username|first|upper }}</span>
+                {% endif %}
+                <p class="listing-byline">By {{ post.author.username }} • {{ post.created_at|date:"Y-m-d H:i" }}</p>
+              </div>
             </div>
             <p class="listing-price">HKD {{ post.price|floatformat:0 }}</p>
           </div>

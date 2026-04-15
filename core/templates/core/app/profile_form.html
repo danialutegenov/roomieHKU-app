@@ -2,9 +2,23 @@
 
 {% block content %}
 <main class="page-shell">
-  <section class="hero">
-    <h1>Edit Profile</h1>
-    <p>Keep your contact details and short bio updated so listing conversations move faster.</p>
+  <section class="hero profile-hero">
+    <div class="profile-hero-copy">
+      <h1>Edit Profile</h1>
+      <p>Keep your contact details and short bio updated so listing conversations move faster.</p>
+    </div>
+    <div class="profile-photo-panel">
+      {% if user.profile_photo %}
+        <img
+          src="{{ user.profile_photo.url }}"
+          alt="{{ user.username }} profile photo"
+          class="author-avatar profile-avatar"
+        />
+      {% else %}
+        <span class="author-avatar avatar-fallback profile-avatar">{{ user.username|first|upper }}</span>
+      {% endif %}
+      <p class="listing-byline">Current profile image</p>
+    </div>
   </section>
 
   <section class="panel mt-4">

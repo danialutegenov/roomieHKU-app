@@ -26,6 +26,8 @@ class CoreModelTests(TestCase):
             password="password123",
             email="author1@example.com",
         )
+        self.author.profile_photo.save("author-avatar.gif", make_uploaded_image("author-avatar.gif"), save=True)
+        self.author.refresh_from_db()
         self.other_user = User.objects.create_user(
             username="user2",
             password="password123",
@@ -116,6 +118,8 @@ class ListingAndPermissionTests(TestCase):
             password="password123",
             email="author1@example.com",
         )
+        self.author.profile_photo.save("author-avatar.gif", make_uploaded_image("author-avatar.gif"), save=True)
+        self.author.refresh_from_db()
         self.other_user = User.objects.create_user(
             username="user2",
             password="password123",
@@ -147,8 +151,14 @@ class ListingAndPermissionTests(TestCase):
         response = self.client.get(reverse("core:listing_list"))
         self.assertContains(response, self.author.username)
         self.assertContains(response, self.post.image_url.url)
+        self.assertContains(response, self.author.profile_photo.url)
         rendered_timestamp = timezone.localtime(self.post.created_at).strftime("%Y-%m-%d %H:%M")
         self.assertContains(response, rendered_timestamp)
+
+    def test_listing_detail_shows_author_profile_photo(self):
+        response = self.client.get(reverse("core:listing_detail", args=[self.post.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.profile_photo.url)
 
     def test_anonymous_user_redirected_for_protected_routes(self):
         protected_routes = [
@@ -519,6 +529,10 @@ class ProfileAndDashboardTests(TestCase):
         self.assertEqual(self.user.bio, "Updated bio")
         self.assertEqual(self.user.phone_number, "12345678")
         self.assertIn("profile_photos/", self.user.profile_photo.name)
+
+        page_response = self.client.get(reverse("core:profile_edit"))
+        self.assertEqual(page_response.status_code, 200)
+        self.assertContains(page_response, self.user.profile_photo.url)
 
     def test_dashboard_access_and_context(self):
         anonymous_response = self.client.get(reverse("core:dashboard_home"))

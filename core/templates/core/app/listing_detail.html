@@ -6,7 +6,18 @@
     <section class="panel">
       <p class="listing-meta">{{ post.get_listing_type_display }} • {{ post.location }}</p>
       <h1 class="mt-1 text-4xl">{{ post.title }}</h1>
-      <p class="listing-byline mt-2">By {{ post.author.username }} • HKD {{ post.price|floatformat:0 }}</p>
+      <div class="author-chip mt-2">
+        {% if post.author.profile_photo %}
+          <img
+            src="{{ post.author.profile_photo.url }}"
+            alt="{{ post.author.username }} profile photo"
+            class="author-avatar"
+          />
+        {% else %}
+          <span class="author-avatar avatar-fallback">{{ post.author.username|first|upper }}</span>
+        {% endif %}
+        <p class="listing-byline">By {{ post.author.username }} • HKD {{ post.price|floatformat:0 }}</p>
+      </div>
 
       {% if post.image_url %}
         <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="listing-image mt-4" />
