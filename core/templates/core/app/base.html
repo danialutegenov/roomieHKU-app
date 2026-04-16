@@ -19,11 +19,12 @@
       <div class="site-shell">
         <div class="site-nav-row">
           <a href="{% url 'core:listing_list' %}" class="site-brand">
-            <span class="brand-mark" aria-hidden="true"></span>
-            <span>
-              <span class="brand-text">RoomieHKU</span>
-              <span class="brand-sub">Student Housing Exchange</span>
-            </span>
+            <img
+              src="{% static 'core/images/logo_roomiehku.png' %}"
+              alt="RoomieHKU"
+              class="site-logo-image"
+            />
+            <span class="sr-only">RoomieHKU</span>
           </a>
 
           <button

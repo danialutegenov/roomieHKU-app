@@ -19,11 +19,12 @@
       <div class="site-shell">
         <div class="site-nav-row">
           <a href="{% url 'core:dashboard_home' %}" class="site-brand">
-            <span class="brand-mark" aria-hidden="true"></span>
-            <span>
-              <span class="brand-text">RoomieHKU Dashboard</span>
-              <span class="brand-sub">Moderation + Insights</span>
-            </span>
+            <img
+              src="{% static 'core/images/logo_roomiehku.png' %}"
+              alt="RoomieHKU"
+              class="site-logo-image"
+            />
+            <span class="sr-only">RoomieHKU Dashboard</span>
           </a>
 
           <button
