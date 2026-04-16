@@ -99,6 +99,10 @@ Post.objects.filter(pk=instance.post_id).update(likes_count=F("likes_count") + 1
 - Commit model changes with their migration in the same PR/commit set.
 - Write clear commit messages describing behavior change, not just file edits.
 - Do not mix refactors with feature behavior changes unless requested.
+- PR descriptions must include explicit change-type bullets in this format:
+  - `feat: <short behavior-focused summary>`
+  - `fix/refactor/chore/docs/test: <short behavior-focused summary for each applicable type>`
+  - include only applicable types; do not add empty placeholders
 
 ## Boundaries
 

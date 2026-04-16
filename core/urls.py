@@ -22,6 +22,7 @@ urlpatterns = [
     path("app/listings/<int:pk>/comments/add/", views.add_comment, name="add_comment"),
     path("app/comments/<int:pk>/delete/", views.delete_comment, name="delete_comment"),
     path("app/my-posts/", views.user_post_history, name="user_post_history"),
+    path("app/saved/", views.saved_listings, name="saved_listings"),
     path("app/profile/edit/", views.profile_edit, name="profile_edit"),
 
     path("dashboard/", views.dashboard_home, name="dashboard_home"),

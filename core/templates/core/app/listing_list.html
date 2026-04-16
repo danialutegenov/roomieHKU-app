@@ -1,102 +1,157 @@
 {% extends 'core/app/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-5xl px-6 py-10">
-  <div class="mb-6 flex items-center justify-between">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight">Listings</h1>
-      <p class="mt-1 text-sm text-slate-600">Browse housing and roommate opportunities around HKU.</p>
+<main class="page-shell">
+  <section class="hero">
+    <h1>Find Your Next Room Near HKU</h1>
+    <p>
+      Search, compare, and shortlist student-friendly options by area, budget, and listing type.
+      The feed updates instantly from your selected filters.
+    </p>
+    <div class="hero-actions">
+      {% if user.is_authenticated %}
+        <a href="{% url 'core:listing_create' %}" class="btn btn-primary">Create Listing</a>
+      {% else %}
+        <a href="{% url 'core:signup' %}" class="btn btn-primary">Join RoomieHKU</a>
+        <a href="{% url 'core:login' %}" class="btn btn-secondary">Log In</a>
+      {% endif %}
     </div>
-    {% if user.is_authenticated %}
-      <a href="{% url 'core:listing_create' %}" class="rounded bg-slate-900 px-4 py-2 text-sm text-white">Create Listing</a>
-    {% endif %}
-  </div>
+  </section>
 
-  <form method="get" class="mb-8 grid gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:grid-cols-6">
-    <div class="md:col-span-2">
-      <label class="mb-1 block text-sm font-medium">Keyword</label>
-      {{ filter_form.q }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">Type</label>
-      {{ filter_form.listing_type }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">Location</label>
-      {{ filter_form.location }}
-    </div>
-    <div class="grid grid-cols-2 gap-3">
+  <section class="panel mt-4">
+    <div class="section-title">
       <div>
-        <label class="mb-1 block text-sm font-medium">Min</label>
-        {{ filter_form.min_price }}
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">Max</label>
-        {{ filter_form.max_price }}
+        <h2>Filter Listings</h2>
+        <p>Use keyword, type, location, budget, and sort order to narrow results.</p>
       </div>
     </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">Sort</label>
-      {{ filter_form.sort_by }}
-    </div>
-    <div class="md:col-span-6">
-      <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm text-white">Apply Filters</button>
-    </div>
-    {% if filter_form.non_field_errors %}
-      <div class="md:col-span-5 text-sm text-red-600">{{ filter_form.non_field_errors }}</div>
-    {% endif %}
-  </form>
 
-  <section class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-xs uppercase tracking-wide text-slate-500">Matching Listings</p>
-      <p class="mt-2 text-2xl font-semibold">{{ market_snapshot.total_results }}</p>
+    <form method="get" class="field-grid filter">
+      <div class="field">
+        <label for="{{ filter_form.q.id_for_label }}">Keyword</label>
+        {{ filter_form.q }}
+      </div>
+
+      <div class="field">
+        <label for="{{ filter_form.listing_type.id_for_label }}">Type</label>
+        {{ filter_form.listing_type }}
+      </div>
+
+      <div class="field">
+        <label for="{{ filter_form.location.id_for_label }}">Location</label>
+        {{ filter_form.location }}
+      </div>
+
+      <div class="field field-grid compact">
+        <div class="field">
+          <label for="{{ filter_form.min_price.id_for_label }}">Min HKD</label>
+          {{ filter_form.min_price }}
+        </div>
+        <div class="field">
+          <label for="{{ filter_form.max_price.id_for_label }}">Max HKD</label>
+          {{ filter_form.max_price }}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="{{ filter_form.sort_by.id_for_label }}">Sort</label>
+        {{ filter_form.sort_by }}
+      </div>
+
+      {% if filter_form.non_field_errors %}
+        <div class="form-errors">{{ filter_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="card-actions">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <a href="{% url 'core:listing_list' %}" class="btn btn-ghost">Reset</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="metric-grid mt-4">
+    <article class="metric-card">
+      <p class="metric-label">Matching Listings</p>
+      <p class="metric-value">{{ market_snapshot.total_results }}</p>
+      <p class="metric-hint">Current result size</p>
     </article>
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-xs uppercase tracking-wide text-slate-500">Average Price</p>
-      <p class="mt-2 text-2xl font-semibold">
+
+    <article class="metric-card">
+      <p class="metric-label">Average Price</p>
+      <p class="metric-value">
         {% if market_snapshot.avg_price %}HKD {{ market_snapshot.avg_price|floatformat:0 }}{% else %}-{% endif %}
       </p>
+      <p class="metric-hint">Across visible results</p>
     </article>
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-xs uppercase tracking-wide text-slate-500">Min Price</p>
-      <p class="mt-2 text-2xl font-semibold">
+
+    <article class="metric-card">
+      <p class="metric-label">Lowest Price</p>
+      <p class="metric-value">
         {% if market_snapshot.min_price %}HKD {{ market_snapshot.min_price|floatformat:0 }}{% else %}-{% endif %}
       </p>
+      <p class="metric-hint">Affordable entry point</p>
     </article>
-    <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p class="text-xs uppercase tracking-wide text-slate-500">Max Price</p>
-      <p class="mt-2 text-2xl font-semibold">
+
+    <article class="metric-card">
+      <p class="metric-label">Highest Price</p>
+      <p class="metric-value">
         {% if market_snapshot.max_price %}HKD {{ market_snapshot.max_price|floatformat:0 }}{% else %}-{% endif %}
       </p>
+      <p class="metric-hint">Upper market range</p>
     </article>
   </section>
 
-  <section class="grid gap-4">
-    {% for post in posts %}
-      <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-        <div class="flex items-start justify-between gap-4">
-          <div class="w-full">
-            <p class="text-xs uppercase tracking-wide text-slate-500">{{ post.listing_type }} • {{ post.location }}</p>
-            <h2 class="mt-1 text-xl font-semibold">
-              <a href="{% url 'core:listing_detail' post.pk %}" class="hover:underline">{{ post.title }}</a>
-            </h2>
-            <p class="mt-1 text-xs text-slate-500">By {{ post.author.username }} • {{ post.created_at|date:"Y-m-d H:i" }}</p>
-            {% if post.image_url %}
-              <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="mt-3 h-44 w-full rounded-lg object-cover" />
-            {% endif %}
-            <p class="mt-2 text-sm text-slate-700">{{ post.description|truncatechars:160 }}</p>
+  <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>Live Listing Feed</h2>
+        <p>Newest posts surface first unless popularity sorting is selected.</p>
+      </div>
+    </div>
+
+    <div class="listing-stack">
+      {% for post in posts %}
+        <article class="listing-card">
+          <div class="listing-head">
+            <div>
+              <p class="listing-meta">{{ post.get_listing_type_display }} • {{ post.location }}</p>
+              <h3 class="listing-title">
+                <a href="{% url 'core:listing_detail' post.pk %}">{{ post.title }}</a>
+              </h3>
+              <div class="author-chip">
+                {% if post.author.profile_photo %}
+                  <img
+                    src="{{ post.author.profile_photo.url }}"
+                    alt="{{ post.author.username }} profile photo"
+                    class="author-avatar"
+                  />
+                {% else %}
+                  <span class="author-avatar avatar-fallback">{{ post.author.username|first|upper }}</span>
+                {% endif %}
+                <p class="listing-byline">By {{ post.author.username }} • {{ post.created_at|date:"Y-m-d H:i" }}</p>
+              </div>
+            </div>
+            <p class="listing-price">HKD {{ post.price|floatformat:0 }}</p>
           </div>
-          <div class="text-right text-sm">
-            <p class="font-semibold">HKD {{ post.price }}</p>
-            <p class="mt-1 text-slate-500">{{ post.likes_count }} likes</p>
-            <p class="mt-1 text-slate-500">{{ post.views_count }} views</p>
+
+          {% if post.image_url %}
+            <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="listing-image" />
+          {% endif %}
+
+          <p class="listing-description">{{ post.description|truncatechars:180 }}</p>
+
+          <div class="listing-footer">
+            <div class="stat-row">
+              <span><strong>{{ post.likes_count }}</strong> likes</span>
+              <span><strong>{{ post.views_count }}</strong> views</span>
+            </div>
+            <a href="{% url 'core:listing_detail' post.pk %}" class="btn btn-secondary">View Details</a>
           </div>
-        </div>
-      </article>
-    {% empty %}
-      <p class="rounded-xl bg-white p-6 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">No listings match your filters.</p>
-    {% endfor %}
+        </article>
+      {% empty %}
+        <p class="empty-state">No listings match your filters. Try broadening the search range.</p>
+      {% endfor %}
+    </div>
   </section>
 </main>
 {% endblock %}

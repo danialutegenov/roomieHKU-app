@@ -122,6 +122,30 @@ def user_post_history(request):
     )
 
 
+@login_required
+def saved_listings(request):
+    sort_by = request.GET.get("sort_by", "newest")
+    if sort_by not in {"newest", "popular"}:
+        sort_by = "newest"
+
+    queryset = (
+        Post.objects.select_related("author")
+        .filter(saved_by__user=request.user, is_hidden=False)
+        .distinct()
+    )
+    posts = _apply_post_sort(queryset, sort_by)
+
+    return render(
+        request,
+        "core/app/saved_listings.html",
+        {
+            "posts": posts,
+            "sort_by": sort_by,
+            "saved_count": queryset.count(),
+        },
+    )
+
+
 def listing_detail(request, pk):
     post = get_object_or_404(Post.objects.select_related("author"), pk=pk)
 

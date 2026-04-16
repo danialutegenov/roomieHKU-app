@@ -1,22 +1,36 @@
 {% extends 'core/app/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-md px-6 py-10">
-  <h1 class="text-2xl font-bold">Log In</h1>
-  <form method="post" class="mt-6 space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.username.label }}</label>
-      {{ form.username }}
-      {{ form.username.errors }}
-    </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium">{{ form.password.label }}</label>
-      {{ form.password }}
-      {{ form.password.errors }}
-    </div>
-    <button type="submit" class="w-full rounded bg-slate-900 px-4 py-2 text-white">Log In</button>
-  </form>
+<main class="auth-shell">
+  <section class="auth-card">
+    <h1 class="auth-title">Log In</h1>
+    <p class="auth-subtitle">Access your listings, comments, and saved opportunities.</p>
+
+    <form method="post" class="field-grid mt-4">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+        {{ form.password }}
+        {{ form.password.errors }}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+    </form>
+
+    <p class="mt-4 text-sm text-secondary">
+      Need an account?
+      <a href="{% url 'core:signup' %}" class="muted-link">Create one</a>
+    </p>
+  </section>
 </main>
 {% endblock %}

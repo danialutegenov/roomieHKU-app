@@ -4,39 +4,85 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RoomieHKU App</title>
+    <title>RoomieHKU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'core/css/styles.css' %}" />
   </head>
-  <body class="bg-slate-50 text-slate-900">
-    <header class="border-b border-slate-200 bg-white">
-      <nav class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <a href="{% url 'core:listing_list' %}" class="text-lg font-semibold">RoomieHKU</a>
-        <div class="flex items-center gap-4 text-sm">
-          <a href="{% url 'core:listing_list' %}" class="hover:text-slate-600">Listings</a>
-          {% if user.is_authenticated %}
-            <a href="{% url 'core:listing_create' %}" class="hover:text-slate-600">New Listing</a>
-            <a href="{% url 'core:user_post_history' %}" class="hover:text-slate-600">My Posts</a>
-            <a href="{% url 'core:profile_edit' %}" class="hover:text-slate-600">Profile</a>
-            <form method="post" action="{% url 'core:logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="rounded bg-slate-900 px-3 py-1.5 text-white">Log Out</button>
-            </form>
-          {% else %}
-            <a href="{% url 'core:login' %}" class="hover:text-slate-600">Log In</a>
-            <a href="{% url 'core:signup' %}" class="rounded bg-slate-900 px-3 py-1.5 text-white">Sign Up</a>
-          {% endif %}
+  <body>
+    <header class="site-header">
+      <div class="site-shell">
+        <div class="site-nav-row">
+          <a href="{% url 'core:listing_list' %}" class="site-brand">
+            <img
+              src="{% static 'core/images/logo_roomiehku.png' %}"
+              alt="RoomieHKU"
+              class="site-logo-image"
+            />
+            <span class="sr-only">RoomieHKU</span>
+          </a>
+
+          <button
+            class="mobile-toggle"
+            type="button"
+            data-mobile-toggle="app-menu"
+            aria-expanded="false"
+            aria-controls="app-menu"
+          >
+            Menu
+          </button>
+
+          <div class="site-menu" id="app-menu">
+            <nav class="nav-links" aria-label="Student app navigation">
+              <a href="{% url 'core:listing_list' %}" class="nav-link" data-nav-link>Listings</a>
+              {% if user.is_authenticated %}
+                <a href="{% url 'core:listing_create' %}" class="nav-link" data-nav-link>New Listing</a>
+                <a href="{% url 'core:user_post_history' %}" class="nav-link" data-nav-link>My Posts</a>
+                <a href="{% url 'core:saved_listings' %}" class="nav-link" data-nav-link>Saved</a>
+                <a href="{% url 'core:profile_edit' %}" class="nav-link" data-nav-link>Profile</a>
+                {% if user.is_staff %}
+                  <a href="{% url 'core:dashboard_home' %}" class="nav-link" data-nav-link>Dashboard</a>
+                {% endif %}
+              {% endif %}
+            </nav>
+
+            <div class="nav-actions">
+              <div class="theme-switch" role="group" aria-label="Theme switch">
+                <button class="theme-option" type="button" data-theme-option="light" aria-pressed="false">Light</button>
+                <button class="theme-option" type="button" data-theme-option="dark" aria-pressed="false">Dark</button>
+                <button class="theme-option" type="button" data-theme-option="system" aria-pressed="false">Auto</button>
+              </div>
+
+              {% if user.is_authenticated %}
+                <form method="post" action="{% url 'core:logout' %}" class="inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary">Log Out</button>
+                </form>
+              {% else %}
+                <a href="{% url 'core:login' %}" class="btn btn-secondary" data-nav-link>Log In</a>
+                <a href="{% url 'core:signup' %}" class="btn btn-primary" data-nav-link>Sign Up</a>
+              {% endif %}
+            </div>
+          </div>
         </div>
-      </nav>
+      </div>
     </header>
+
     {% if messages %}
-      <section class="mx-auto mt-4 max-w-5xl px-6">
+      <section class="flash-list" aria-live="polite">
         {% for message in messages %}
-          <p class="mb-2 rounded bg-emerald-100 px-3 py-2 text-sm text-emerald-800">{{ message }}</p>
+          <p class="flash-msg {{ message.tags|default:'' }}">{{ message }}</p>
         {% endfor %}
       </section>
     {% endif %}
+
     {% block content %}{% endblock %}
+
     <script src="{% static 'core/js/main.js' %}"></script>
   </body>
 </html>

@@ -3,21 +3,28 @@
 {% block content %}
 <main class="page-shell">
   <section class="hero">
-    <h1>My Listing History</h1>
+    <h1>Saved Listings</h1>
     <p>
-      Track your published listings in one place. Sort by newest activity or by popularity
-      to see which posts are drawing the most attention.
+      Revisit listings you bookmarked while browsing. Keep this list as your shortlist
+      while you compare options and reach out to authors.
     </p>
     <div class="hero-actions">
-      <a href="{% url 'core:listing_create' %}" class="btn btn-primary">Create Listing</a>
-      <a href="{% url 'core:listing_list' %}" class="btn btn-secondary">Back to Feed</a>
+      <a href="{% url 'core:listing_list' %}" class="btn btn-primary">Browse More Listings</a>
+      <a href="{% url 'core:user_post_history' %}" class="btn btn-secondary">My Posts</a>
     </div>
   </section>
 
   <section class="panel mt-4">
+    <div class="section-title">
+      <div>
+        <h2>Your Saved Feed</h2>
+        <p>{{ saved_count }} listing{{ saved_count|pluralize }} saved.</p>
+      </div>
+    </div>
+
     <form method="get" class="field-grid compact">
       <div class="field">
-        <label for="sort_by">Sort listings</label>
+        <label for="sort_by">Sort saved listings</label>
         <select id="sort_by" name="sort_by">
           <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
           <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
@@ -30,13 +37,6 @@
   </section>
 
   <section class="panel mt-4">
-    <div class="section-title">
-      <div>
-        <h2>Your Posts</h2>
-        <p>Only listings authored by your account are shown below.</p>
-      </div>
-    </div>
-
     <div class="listing-stack">
       {% for post in posts %}
         <article class="listing-card">
@@ -66,7 +66,7 @@
             <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="listing-image" />
           {% endif %}
 
-          <p class="listing-description">{{ post.description|truncatechars:170 }}</p>
+          <p class="listing-description">{{ post.description|truncatechars:180 }}</p>
 
           <div class="listing-footer">
             <div class="stat-row">
@@ -74,13 +74,19 @@
               <span><strong>{{ post.views_count }}</strong> views</span>
             </div>
             <div class="inline-actions">
-              <a href="{% url 'core:listing_detail' post.pk %}" class="btn btn-secondary">Open</a>
-              <a href="{% url 'core:listing_update' post.pk %}" class="btn btn-ghost">Edit</a>
+              <a href="{% url 'core:listing_detail' post.pk %}" class="btn btn-secondary">View</a>
+              <form method="post" action="{% url 'core:toggle_save' post.pk %}" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+                <button type="submit" class="btn btn-ghost">Unsave</button>
+              </form>
             </div>
           </div>
         </article>
       {% empty %}
-        <p class="empty-state">You have not posted any listings yet.</p>
+        <p class="empty-state">
+          You have no saved listings yet. Browse the feed and use the Save action on listings you want to revisit.
+        </p>
       {% endfor %}
     </div>
   </section>

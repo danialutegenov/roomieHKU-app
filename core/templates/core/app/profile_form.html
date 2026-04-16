@@ -1,19 +1,63 @@
 {% extends 'core/app/base.html' %}
 
 {% block content %}
-<main class="mx-auto max-w-2xl px-6 py-10">
-  <h1 class="text-2xl font-bold">Edit Profile</h1>
-  <form method="post" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    {% for field in form %}
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
-        {{ field }}
-        {{ field.errors }}
+<main class="page-shell">
+  <section class="hero profile-hero">
+    <div class="profile-hero-copy">
+      <h1>Edit Profile</h1>
+      <p>Keep your contact details and short bio updated so listing conversations move faster.</p>
+    </div>
+    <div class="profile-photo-panel">
+      {% if user.profile_photo %}
+        <img
+          src="{{ user.profile_photo.url }}"
+          alt="{{ user.username }} profile photo"
+          class="author-avatar profile-avatar"
+        />
+      {% else %}
+        <span class="author-avatar avatar-fallback profile-avatar">{{ user.username|first|upper }}</span>
+      {% endif %}
+      <p class="listing-byline">Current profile image</p>
+    </div>
+  </section>
+
+  <section class="panel mt-4">
+    <form method="post" enctype="multipart/form-data" class="field-grid">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="field-grid compact">
+        <div class="field">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {{ form.email.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+          {{ form.phone_number }}
+          {{ form.phone_number.errors }}
+        </div>
       </div>
-    {% endfor %}
-    <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-white">Update Profile</button>
-  </form>
+
+      <div class="field">
+        <label for="{{ form.bio.id_for_label }}">{{ form.bio.label }}</label>
+        {{ form.bio }}
+        {{ form.bio.errors }}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.profile_photo.id_for_label }}">{{ form.profile_photo.label }}</label>
+        {{ form.profile_photo }}
+        {{ form.profile_photo.errors }}
+      </div>
+
+      <div class="card-actions">
+        <button type="submit" class="btn btn-primary">Update Profile</button>
+      </div>
+    </form>
+  </section>
 </main>
 {% endblock %}
