@@ -26,8 +26,6 @@ class CoreModelTests(TestCase):
             password="password123",
             email="author1@example.com",
         )
-        self.author.profile_photo.save("author-avatar.gif", make_uploaded_image("author-avatar.gif"), save=True)
-        self.author.refresh_from_db()
         self.other_user = User.objects.create_user(
             username="user2",
             password="password123",
