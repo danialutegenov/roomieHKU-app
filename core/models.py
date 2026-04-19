@@ -61,6 +61,12 @@ class Post(models.Model):
         help_text="Upload listing image",
         validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif", "webp"])],
     )
+    source_image_url = models.URLField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Original remote image URL for imported listings",
+    )
 
     # RoomieHKU Business Logic
     listing_type = models.CharField(max_length=20, choices=LISTING_TYPE_CHOICES)
@@ -105,6 +111,14 @@ class Post(models.Model):
         ]
     def __str__(self):
         return f"{self.listing_type}: {self.title}"
+
+    @property
+    def display_image_url(self):
+        if self.source_image_url:
+            return self.source_image_url
+        if self.image_url:
+            return self.image_url.url
+        return ""
 
 
 class Comment(models.Model):

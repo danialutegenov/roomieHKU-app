@@ -19,8 +19,8 @@
         <p class="listing-byline">By {{ post.author.username }} • HKD {{ post.price|floatformat:0 }}</p>
       </div>
 
-      {% if post.image_url %}
-        <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="listing-image mt-4" />
+      {% if post.display_image_url %}
+        <img src="{{ post.display_image_url }}" alt="{{ post.title }}" class="listing-image mt-4" />
       {% endif %}
 
       <div class="mt-4 space-y-3">

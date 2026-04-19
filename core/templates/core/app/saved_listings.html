@@ -62,8 +62,8 @@
             <p class="listing-price">HKD {{ post.price|floatformat:0 }}</p>
           </div>
 
-          {% if post.image_url %}
-            <img src="{{ post.image_url.url }}" alt="{{ post.title }}" class="listing-image" />
+          {% if post.display_image_url %}
+            <img src="{{ post.display_image_url }}" alt="{{ post.title }}" class="listing-image" />
           {% endif %}
 
           <p class="listing-description">{{ post.description|truncatechars:180 }}</p>
