@@ -736,35 +736,38 @@ class RepairMediaFilesCommandTests(TestCase):
 
 class SeedStubDataCommandTests(TestCase):
     @override_settings()
-    def test_seed_stub_data_sets_ffhq_profile_photos_only_for_users(self):
+    def test_seed_stub_data_sets_profile_photos_for_fifteen_users_and_listing_images(self):
         with tempfile.TemporaryDirectory() as tmp_media_root:
             with self.settings(MEDIA_ROOT=tmp_media_root):
                 with patch(
                     "core.management.commands.seed_stub_data.Command._download_or_placeholder",
-                    return_value=b"ffhq-image-bytes",
-                ), patch(
-                    "core.management.commands.seed_stub_data.Command._download_kaggle_room_image_or_placeholder",
-                    return_value=b"kaggle-room-bytes",
+                    return_value=b"unsplash-image-bytes",
                 ):
                     call_command("seed_stub_data")
 
                 expected_profile_files = {
-                    "noah_chan": "profile_photos/ffhq-noah-chan.png",
-                    "daniel_wong": "profile_photos/ffhq-daniel-wong.png",
-                    "marcus_leung": "profile_photos/ffhq-marcus-leung.png",
-                    "isaac_lau": "profile_photos/ffhq-isaac-lau.png",
-                    "maya_shah": "profile_photos/ffhq-maya-shah.png",
-                    "natalie_cheng": "profile_photos/ffhq-natalie-cheng.png",
-                    "emily_kwok": "profile_photos/ffhq-emily-kwok.png",
-                    "sophie_ho": "profile_photos/ffhq-sophie-ho.png",
-                    "hannah_ng": "profile_photos/ffhq-hannah-ng.png",
-                    "admin_tszho": "profile_photos/ffhq-staff.png",
+                    "noah_chan": "profile_photos/student-noah-chan.jpg",
+                    "daniel_wong": "profile_photos/student-daniel-wong.jpg",
+                    "marcus_leung": "profile_photos/student-marcus-leung.jpg",
+                    "isaac_lau": "profile_photos/student-isaac-lau.jpg",
+                    "maya_shah": "profile_photos/student-maya-shah.jpg",
+                    "natalie_cheng": "profile_photos/student-natalie-cheng.jpg",
+                    "emily_kwok": "profile_photos/student-emily-kwok.jpg",
+                    "sophie_ho": "profile_photos/student-sophie-ho.jpg",
+                    "hannah_ng": "profile_photos/student-hannah-ng.jpg",
+                    "leo_pang": "profile_photos/student-leo-pang.jpg",
+                    "grace_lam": "profile_photos/student-grace-lam.jpg",
+                    "ethan_yu": "profile_photos/student-ethan-yu.jpg",
+                    "jasmine_lee": "profile_photos/student-jasmine-lee.jpg",
+                    "ryan_cheung": "profile_photos/student-ryan-cheung.jpg",
+                    "admin_tszho": "profile_photos/student-admin-tszho.jpg",
                 }
                 for username, expected_path in expected_profile_files.items():
                     user = User.objects.get(username=username)
                     self.assertEqual(user.profile_photo.name, expected_path)
                     self.assertTrue(default_storage.exists(expected_path))
-                self.assertEqual(User.objects.count(), 10)
+                self.assertEqual(User.objects.count(), 15)
+                self.assertEqual(Post.objects.count(), 10)
 
                 post = Post.objects.get(title="2BR Flat in Kennedy Town (10 mins to HKU)")
-                self.assertEqual(post.image_url.name, "listing_images/listing-kennedy-town-room.jpg")
+                self.assertEqual(post.image_url.name, "listing_images/ktown-sunset-2br.jpg")
