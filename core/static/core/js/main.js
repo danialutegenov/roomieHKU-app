@@ -65,12 +65,78 @@
         return;
       }
 
+      const closeMenu = () => {
+        toggle.setAttribute("aria-expanded", "false");
+        target.classList.remove("is-open");
+      };
+
       toggle.addEventListener("click", () => {
         const expanded = toggle.getAttribute("aria-expanded") === "true";
         toggle.setAttribute("aria-expanded", expanded ? "false" : "true");
         target.classList.toggle("is-open", !expanded);
       });
+
+      target.querySelectorAll("[data-mobile-close]").forEach((item) => {
+        item.addEventListener("click", closeMenu);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeMenu();
+        }
+      });
+
+      document.addEventListener("click", (event) => {
+        if (
+          target.classList.contains("is-open") &&
+          !target.contains(event.target) &&
+          !toggle.contains(event.target)
+        ) {
+          closeMenu();
+        }
+      });
     });
+  }
+
+  function normalizePath(path) {
+    if (!path) {
+      return "/";
+    }
+    return path.endsWith("/") ? path : `${path}/`;
+  }
+
+  function resolveAppTabGroup(pathname) {
+    const path = normalizePath(pathname);
+
+    if (path === "/" || path === "/app/" || path === "/app/listings/") {
+      return "listings";
+    }
+
+    if (/^\/app\/listings\/new\/$/.test(path)) {
+      return "new";
+    }
+
+    if (/^\/app\/listings\/\d+\/(?:edit|delete)\/$/.test(path)) {
+      return "my-posts";
+    }
+
+    if (path === "/app/my-posts/") {
+      return "my-posts";
+    }
+
+    if (path === "/app/saved/") {
+      return "saved";
+    }
+
+    if (path === "/app/profile/edit/" || /^\/auth\/(?:login|signup)\/$/.test(path)) {
+      return "profile";
+    }
+
+    if (/^\/app\/listings\/\d+\/$/.test(path)) {
+      return "listings";
+    }
+
+    return null;
   }
 
   function setActiveNavLinks() {
@@ -89,9 +155,32 @@
     });
   }
 
+  function setActiveMobileTabs() {
+    const tabLinks = document.querySelectorAll("[data-mobile-tab]");
+    if (!tabLinks.length) {
+      return;
+    }
+
+    const currentPath = normalizePath(window.location.pathname);
+    const activeGroup = resolveAppTabGroup(currentPath);
+
+    tabLinks.forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      const routeGroup = link.dataset.routeGroup || "";
+      const hrefPath = href.startsWith("/") ? normalizePath(href) : "";
+      const isActive = activeGroup
+        ? routeGroup === activeGroup
+        : hrefPath !== "/" && currentPath.startsWith(hrefPath);
+
+      link.classList.toggle("is-active", isActive);
+      link.setAttribute("aria-current", isActive ? "page" : "false");
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initThemeSwitch();
     initMobileMenus();
     setActiveNavLinks();
+    setActiveMobileTabs();
   });
 })();
