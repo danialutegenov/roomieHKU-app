@@ -114,6 +114,49 @@ class AuthFlowTests(TestCase):
         self.assertNotIn("_auth_user_id", self.client.session)
 
 
+class MobileNavigationShellTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="mobileuser",
+            password="password123",
+            email="mobileuser@example.com",
+        )
+        self.staff_user = User.objects.create_user(
+            username="mobilestaff",
+            password="password123",
+            email="mobilestaff@example.com",
+            is_staff=True,
+        )
+
+    def test_mobile_tab_bar_renders_five_primary_tabs(self):
+        response = self.client.get(reverse("core:listing_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "mobile-tabbar")
+        for route_group in ["listings", "new", "my-posts", "saved", "profile"]:
+            self.assertContains(response, f'data-route-group="{route_group}"')
+
+    def test_signed_out_mobile_tabs_include_protected_destinations(self):
+        response = self.client.get(reverse("core:listing_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("core:listing_create"))
+        self.assertContains(response, reverse("core:user_post_history"))
+        self.assertContains(response, reverse("core:saved_listings"))
+        self.assertContains(response, reverse("core:profile_edit"))
+
+    def test_login_page_includes_mobile_tab_shell(self):
+        response = self.client.get(reverse("core:login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "mobile-tabbar")
+        self.assertContains(response, 'data-route-group="profile"')
+
+    def test_staff_user_sees_dashboard_profile_shortcut(self):
+        self.client.login(username="mobilestaff", password="password123")
+        response = self.client.get(reverse("core:listing_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-profile-shortcut="dashboard"')
+        self.assertContains(response, reverse("core:dashboard_home"))
+
+
 class ListingAndPermissionTests(TestCase):
     def setUp(self):
         self.author = User.objects.create_user(
