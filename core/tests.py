@@ -1,12 +1,17 @@
 from decimal import Decimal
+import tempfile
+from unittest.mock import patch
 
+from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from .management.commands.repair_media_files import PLACEHOLDER_GIF
 from .models import Comment, Like, Post, SavedListing, User
 
 
@@ -634,3 +639,89 @@ class ProfileAndDashboardTests(TestCase):
         self.assertFalse(self.user.is_suspended)
         self.assertFalse(self.post.is_hidden)
         self.assertTrue(Comment.objects.filter(pk=self.comment.pk).exists())
+
+
+class RepairMediaFilesCommandTests(TestCase):
+    def setUp(self):
+        self.author = User.objects.create_user(
+            username="repairuser",
+            password="password123",
+            email="repair@example.com",
+        )
+
+    @override_settings()
+    def test_repair_media_files_creates_missing_local_media_files(self):
+        with tempfile.TemporaryDirectory() as tmp_media_root:
+            with self.settings(MEDIA_ROOT=tmp_media_root):
+                post = Post.objects.create(
+                    author=self.author,
+                    title="Missing file listing",
+                    description="Image path exists in DB but file is missing.",
+                    image_url=make_uploaded_image("repair-existing.gif"),
+                    listing_type="Apartment",
+                    location="Kennedy Town",
+                    price="9500.00",
+                )
+                Post.objects.filter(pk=post.pk).update(image_url="listing_images/missing-from-db.gif")
+                User.objects.filter(pk=self.author.pk).update(profile_photo="profile_photos/missing-user-file.gif")
+
+                call_command("repair_media_files")
+
+                self.assertTrue(default_storage.exists("listing_images/missing-from-db.gif"))
+                self.assertTrue(default_storage.exists("profile_photos/missing-user-file.gif"))
+
+                with default_storage.open("listing_images/missing-from-db.gif", "rb") as listing_file:
+                    self.assertEqual(listing_file.read(), PLACEHOLDER_GIF)
+
+    def test_repair_media_files_skips_external_urls(self):
+        post = Post.objects.create(
+            author=self.author,
+            title="External image listing",
+            description="External URLs should not be rewritten.",
+            image_url=make_uploaded_image("repair-existing.gif"),
+            listing_type="Apartment",
+            location="Sai Ying Pun",
+            price="9800.00",
+        )
+        Post.objects.filter(pk=post.pk).update(image_url="https://example.com/remote-image.jpg")
+
+        call_command("repair_media_files")
+
+        post.refresh_from_db()
+        self.assertEqual(post.image_url.name, "https://example.com/remote-image.jpg")
+
+
+class SeedStubDataCommandTests(TestCase):
+    @override_settings()
+    def test_seed_stub_data_sets_ffhq_profile_photos_only_for_users(self):
+        with tempfile.TemporaryDirectory() as tmp_media_root:
+            with self.settings(MEDIA_ROOT=tmp_media_root):
+                with patch(
+                    "core.management.commands.seed_stub_data.Command._download_or_placeholder",
+                    return_value=b"ffhq-image-bytes",
+                ), patch(
+                    "core.management.commands.seed_stub_data.Command._download_kaggle_room_image_or_placeholder",
+                    return_value=b"kaggle-room-bytes",
+                ):
+                    call_command("seed_stub_data")
+
+                expected_profile_files = {
+                    "noah_chan": "profile_photos/ffhq-noah-chan.png",
+                    "daniel_wong": "profile_photos/ffhq-daniel-wong.png",
+                    "marcus_leung": "profile_photos/ffhq-marcus-leung.png",
+                    "isaac_lau": "profile_photos/ffhq-isaac-lau.png",
+                    "maya_shah": "profile_photos/ffhq-maya-shah.png",
+                    "natalie_cheng": "profile_photos/ffhq-natalie-cheng.png",
+                    "emily_kwok": "profile_photos/ffhq-emily-kwok.png",
+                    "sophie_ho": "profile_photos/ffhq-sophie-ho.png",
+                    "hannah_ng": "profile_photos/ffhq-hannah-ng.png",
+                    "admin_tszho": "profile_photos/ffhq-staff.png",
+                }
+                for username, expected_path in expected_profile_files.items():
+                    user = User.objects.get(username=username)
+                    self.assertEqual(user.profile_photo.name, expected_path)
+                    self.assertTrue(default_storage.exists(expected_path))
+                self.assertEqual(User.objects.count(), 10)
+
+                post = Post.objects.get(title="2BR Flat in Kennedy Town (10 mins to HKU)")
+                self.assertEqual(post.image_url.name, "listing_images/listing-kennedy-town-room.jpg")
