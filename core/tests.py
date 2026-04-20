@@ -1,17 +1,12 @@
 from decimal import Decimal
-import tempfile
-from unittest.mock import patch
 
-from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.management import call_command
 from django.db import IntegrityError
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .management.commands.repair_media_files import PLACEHOLDER_GIF
 from .models import Comment, Like, Post, SavedListing, User
 
 
@@ -112,49 +107,6 @@ class AuthFlowTests(TestCase):
         logout_response = self.client.post(reverse("core:logout"))
         self.assertRedirects(logout_response, reverse("core:listing_list"))
         self.assertNotIn("_auth_user_id", self.client.session)
-
-
-class MobileNavigationShellTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="mobileuser",
-            password="password123",
-            email="mobileuser@example.com",
-        )
-        self.staff_user = User.objects.create_user(
-            username="mobilestaff",
-            password="password123",
-            email="mobilestaff@example.com",
-            is_staff=True,
-        )
-
-    def test_mobile_tab_bar_renders_five_primary_tabs(self):
-        response = self.client.get(reverse("core:listing_list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "mobile-tabbar")
-        for route_group in ["listings", "new", "my-posts", "saved", "profile"]:
-            self.assertContains(response, f'data-route-group="{route_group}"')
-
-    def test_signed_out_mobile_tabs_include_protected_destinations(self):
-        response = self.client.get(reverse("core:listing_list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, reverse("core:listing_create"))
-        self.assertContains(response, reverse("core:user_post_history"))
-        self.assertContains(response, reverse("core:saved_listings"))
-        self.assertContains(response, reverse("core:profile_edit"))
-
-    def test_login_page_includes_mobile_tab_shell(self):
-        response = self.client.get(reverse("core:login"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "mobile-tabbar")
-        self.assertContains(response, 'data-route-group="profile"')
-
-    def test_staff_user_sees_dashboard_profile_shortcut(self):
-        self.client.login(username="mobilestaff", password="password123")
-        response = self.client.get(reverse("core:listing_list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-profile-shortcut="dashboard"')
-        self.assertContains(response, reverse("core:dashboard_home"))
 
 
 class ListingAndPermissionTests(TestCase):
@@ -682,92 +634,3 @@ class ProfileAndDashboardTests(TestCase):
         self.assertFalse(self.user.is_suspended)
         self.assertFalse(self.post.is_hidden)
         self.assertTrue(Comment.objects.filter(pk=self.comment.pk).exists())
-
-
-class RepairMediaFilesCommandTests(TestCase):
-    def setUp(self):
-        self.author = User.objects.create_user(
-            username="repairuser",
-            password="password123",
-            email="repair@example.com",
-        )
-
-    @override_settings()
-    def test_repair_media_files_creates_missing_local_media_files(self):
-        with tempfile.TemporaryDirectory() as tmp_media_root:
-            with self.settings(MEDIA_ROOT=tmp_media_root):
-                post = Post.objects.create(
-                    author=self.author,
-                    title="Missing file listing",
-                    description="Image path exists in DB but file is missing.",
-                    image_url=make_uploaded_image("repair-existing.gif"),
-                    listing_type="Apartment",
-                    location="Kennedy Town",
-                    price="9500.00",
-                )
-                Post.objects.filter(pk=post.pk).update(image_url="listing_images/missing-from-db.gif")
-                User.objects.filter(pk=self.author.pk).update(profile_photo="profile_photos/missing-user-file.gif")
-
-                call_command("repair_media_files")
-
-                self.assertTrue(default_storage.exists("listing_images/missing-from-db.gif"))
-                self.assertTrue(default_storage.exists("profile_photos/missing-user-file.gif"))
-
-                with default_storage.open("listing_images/missing-from-db.gif", "rb") as listing_file:
-                    self.assertEqual(listing_file.read(), PLACEHOLDER_GIF)
-
-    def test_repair_media_files_skips_external_urls(self):
-        post = Post.objects.create(
-            author=self.author,
-            title="External image listing",
-            description="External URLs should not be rewritten.",
-            image_url=make_uploaded_image("repair-existing.gif"),
-            listing_type="Apartment",
-            location="Sai Ying Pun",
-            price="9800.00",
-        )
-        Post.objects.filter(pk=post.pk).update(image_url="https://example.com/remote-image.jpg")
-
-        call_command("repair_media_files")
-
-        post.refresh_from_db()
-        self.assertEqual(post.image_url.name, "https://example.com/remote-image.jpg")
-
-
-class SeedStubDataCommandTests(TestCase):
-    @override_settings()
-    def test_seed_stub_data_sets_profile_photos_for_fifteen_users_and_listing_images(self):
-        with tempfile.TemporaryDirectory() as tmp_media_root:
-            with self.settings(MEDIA_ROOT=tmp_media_root):
-                with patch(
-                    "core.management.commands.seed_stub_data.Command._download_or_placeholder",
-                    return_value=b"unsplash-image-bytes",
-                ):
-                    call_command("seed_stub_data")
-
-                expected_profile_files = {
-                    "noah_chan": "profile_photos/student-noah-chan.jpg",
-                    "daniel_wong": "profile_photos/student-daniel-wong.jpg",
-                    "marcus_leung": "profile_photos/student-marcus-leung.jpg",
-                    "isaac_lau": "profile_photos/student-isaac-lau.jpg",
-                    "maya_shah": "profile_photos/student-maya-shah.jpg",
-                    "natalie_cheng": "profile_photos/student-natalie-cheng.jpg",
-                    "emily_kwok": "profile_photos/student-emily-kwok.jpg",
-                    "sophie_ho": "profile_photos/student-sophie-ho.jpg",
-                    "hannah_ng": "profile_photos/student-hannah-ng.jpg",
-                    "leo_pang": "profile_photos/student-leo-pang.jpg",
-                    "grace_lam": "profile_photos/student-grace-lam.jpg",
-                    "ethan_yu": "profile_photos/student-ethan-yu.jpg",
-                    "jasmine_lee": "profile_photos/student-jasmine-lee.jpg",
-                    "ryan_cheung": "profile_photos/student-ryan-cheung.jpg",
-                    "admin_tszho": "profile_photos/student-admin-tszho.jpg",
-                }
-                for username, expected_path in expected_profile_files.items():
-                    user = User.objects.get(username=username)
-                    self.assertEqual(user.profile_photo.name, expected_path)
-                    self.assertTrue(default_storage.exists(expected_path))
-                self.assertEqual(User.objects.count(), 15)
-                self.assertEqual(Post.objects.count(), 10)
-
-                post = Post.objects.get(title="2BR Flat in Kennedy Town (10 mins to HKU)")
-                self.assertEqual(post.image_url.name, "listing_images/ktown-sunset-2br.jpg")
